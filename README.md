@@ -6,6 +6,10 @@ Why? During DC fast charging, both the charger cabinet and the vehicle battery t
 
 ⸻
 
+Caution: This was created in November 2025 and has not undergone real world testing or professional review/certification. Any feedback is welcome.
+
+⸻
+
 ✨ Features
 	•	Truck presets + custom entry (pack size & max accept kW)
 	•	Level 2 vs Level 3 charging
@@ -19,6 +23,14 @@ Why? During DC fast charging, both the charger cabinet and the vehicle battery t
 	•	Polished math panel rendered with KaTeX
 
 ⸻
+
+✨ URL
+	•	Access it here:
+	https://blackrockcity.github.io/EV-Fire-Apparatus-Charging-Heat-Calculator
+
+⸻
+
+OR Host it yourself!
 
 🚀 Quick Start
 	1.	Download index.html from this repo.
@@ -141,4 +153,4 @@ Issues and PRs are welcome—bug fixes, new presets, UX improvements, or additio
 
 📝 License
 
-GPL 3. See LICENSE for details.
+GPL v3.0. See LICENSE for details.
