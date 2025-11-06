@@ -128,7 +128,8 @@ Increase “Simultaneous” to see how peak load scales; set BTMS to 0% if you c
 
 🖼️ Screenshot
 
-Add a screenshot of the calculator UI here.
+
+![EV Fire Apparatus Calculator UI](./docs/screenshot.png)
 
 ⸻
 
