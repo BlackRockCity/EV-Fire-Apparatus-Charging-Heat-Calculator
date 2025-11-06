@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>EV Fire Apparatus Charging Heat Calculator</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1e2330; --text:#e8ecf1; --muted:#a8b0bd;
+    --accent:#5dd3ff; --accent-2:#9cff5d; --danger:#ff6b6b; --ok:#5dffa3;
+    --grid:#273045; --input:#121621; --ring:#5dd3ff55;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;
+    color:var(--text); background:linear-gradient(180deg,#0c0e13,#121521 40%,#0c0e13);
+  }
+  header{
+    padding:20px 16px; border-bottom:1px solid #202737; background:rgba(0,0,0,.25);
+    position:sticky; top:0; z-index:2; backdrop-filter: blur(8px);
+  }
+  h1{margin:0; font-size:22px; letter-spacing:.2px}
+  .wrap{max-width:1200px; margin:0 auto; padding:16px}
+  .grid{display:grid; gap:16px}
+  @media(min-width:960px){ .grid-2{grid-template-columns:1fr 1fr} .grid-3{grid-template-columns:1fr 1fr 1fr} }
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid #222a3d; border-radius:14px; padding:16px; box-shadow:0 10px 30px #0006;
+  }
+  .card h2{margin:0 0 10px; font-size:18px}
+  label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px}
+  input, select{
+    width:100%; background:var(--input); border:1px solid #2a3550; color:var(--text);
+    border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
+  }
+  input:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--ring)}
+  .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .inline{display:flex; gap:10px; align-items:center}
+  .muted{color:var(--muted); font-size:12px}
+  .pill{display:inline-block; padding:4px 8px; border-radius:999px; background:#1a2131; border:1px solid #2a3550; color:#bcd3ff; font-size:12px; margin-left:6px}
+  .out kbd{background:#151a25; border:1px solid #2a3550; border-radius:6px; padding:2px 6px; color:#cde6ff}
+  .out h3{margin:10px 0 6px; font-size:16px}
+  .stats{display:grid; gap:12px}
+  @media(min-width:960px){ .stats{grid-template-columns:repeat(3,1fr)} }
+  .stat{
+    background:#121621; border:1px solid #273045; border-radius:12px; padding:12px;
+  }
+  .stat .v{font-size:22px; font-weight:700}
+  .stat .u{color:var(--muted); font-size:12px}
+  .help{font-size:12px; color:#9cb3d8}
+  .btn{
+    cursor:pointer; background:linear-gradient(180deg,#1d8cff,#0a6bdc);
+    border:none; color:white; border-radius:10px; padding:10px 14px; font-weight:600;
+    box-shadow:0 6px 20px #0a6bdc66;
+  }
+  .btn.alt{background:linear-gradient(180deg,#35c96d,#179f52); box-shadow:0 6px 20px #179f5266}
+  .btn.ghost{background:#121621; border:1px solid #2a3550; color:#cfe6ff}
+  .small{font-size:12px}
+  .hr{height:1px; background:#232b3e; margin:12px 0}
+  .tag{background:#243151; padding:2px 6px; border-radius:6px; font-size:12px; margin-left:4px}
+  .footer{color:#8895ad; font-size:12px; text-align:center; padding:20px 0}
+  .flex{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .formula-box{
+    background:linear-gradient(135deg,#1a2332,#151d2b); 
+    border:1px solid #2d3f5f; border-radius:12px; padding:18px; 
+    box-shadow:inset 0 1px 3px #0004;
+  }
+  .formula-title{
+    font-size:15px; font-weight:700; color:#7ec8ff; margin-bottom:14px; 
+    display:flex; align-items:center; gap:8px;
+  }
+  .formula-section{margin-bottom:14px}
+  .formula-section:last-child{margin-bottom:0}
+  .formula-label{
+    font-size:13px; font-weight:600; color:#9cb8db; margin-bottom:8px; 
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .formula-math{
+    font-family:'Courier New',Consolas,Monaco,monospace; font-size:14px; 
+    line-height:1.7; color:#d5e8ff; background:#0d1419; 
+    padding:12px 14px; border-radius:8px; border:1px solid #1e2d42; 
+    overflow-x:auto;
+  }
+  .math-var{color:#5dd3ff; font-style:italic}
+  .math-const{color:#9cff5d; font-weight:600}
+  .formula-note{
+    font-size:11px; color:#8fa8c7; margin-top:6px; font-style:italic;
+  }
+  .formula-grid{
+    display:grid; gap:8px; font-size:13px; color:#c5d9f2;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  }
+  .formula-grid>div{
+    background:#0d1419; padding:8px 12px; border-radius:6px; 
+    border:1px solid #1e2d42;
+  }
+  .tooltip{
+    position:relative; cursor:help; display:inline-block;
+  }
+  .tooltip .tooltip-text{
+    visibility:hidden; opacity:0; width:220px; background:#1a2535; 
+    color:#d5e8ff; text-align:left; border-radius:8px; padding:10px 12px; 
+    position:absolute; z-index:10; bottom:125%; left:50%; 
+    margin-left:-110px; font-size:12px; line-height:1.4; font-weight:400;
+    border:1px solid #2d4060; box-shadow:0 6px 20px #0006;
+    transition:opacity 0.2s;
+  }
+  .tooltip .tooltip-text::after{
+    content:""; position:absolute; top:100%; left:50%; margin-left:-6px;
+    border-width:6px; border-style:solid; 
+    border-color:#1a2535 transparent transparent transparent;
+  }
+  .tooltip:hover .tooltip-text{visibility:visible; opacity:1}
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>EV Fire Apparatus Charging Heat Calculator
+        <span class="pill">kW → BTU/h → Tons → W/ft² → CFM</span>
+      </h1>
+    </div>
+  </header>
+
+  <main class="wrap grid grid-2">
+    <!-- LEFT: Inputs -->
+    <section class="card">
+      <h2>Scenario</h2>
+
+      <div class="grid grid-3">
+        <div>
+          <label>Bay square footage (total)</label>
+          <input type="number" id="baySf" min="1" step="1" value="3300">
+        </div>
+        <div>
+          <label>Vehicles (total)</label>
+          <input type="number" id="numVehicles" min="1" step="1" value="1">
+        </div>
+        <div>
+          <label>Simultaneous charging vehicles</label>
+          <input type="number" id="concurrent" min="1" step="1" value="1">
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:8px">
+        <div>
+          <label>Charging type</label>
+          <select id="chargeType">
+            <option value="L3" selected>Level 3 (DC Fast)</option>
+            <option value="L2">Level 2 (AC)</option>
+          </select>
+        </div>
+        <div>
+          <label>Per-vehicle charge power (kW)</label>
+          <input type="number" id="chargePower" min="1" step="1" value="150">
+        </div>
+        <div>
+          <label>Diversity factor (0–1) 
+            <span class="tooltip tag">
+              help
+              <span class="tooltip-text">Reduces coincident peak load for part-load or operational staggering. Set to 1.0 for worst-case simultaneous charging, or lower (e.g., 0.7-0.9) if vehicles charge at different times.</span>
+            </span>
+          </label>
+          <input type="number" id="diversity" min="0" max="1" step="0.05" value="1">
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:8px">
+        <div>
+          <label>Charger cabinet location</label>
+          <select id="cabinetLocation">
+            <option value="in">In bay (adds heat)</option>
+            <option value="out" selected>Outdoor / Elec. room</option>
+          </select>
+        </div>
+        <div>
+          <label>Charger efficiency η<sub>charger</sub> (%)</label>
+          <input type="number" id="etaCharger" min="80" max="100" step="0.5" value="95">
+        </div>
+        <div>
+          <label>Vehicle charging efficiency η<sub>veh</sub> (%)</label>
+          <input type="number" id="etaVehicle" min="80" max="100" step="0.5" value="92">
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:8px">
+        <div>
+          <label>BTMS exhaust to room (%) 
+            <span class="tooltip tag">
+              help
+              <span class="tooltip-text">Percent of vehicle-side heat that ends up in the bay. Set to 0% if the truck's battery cooling air is fully ducted outdoors. Set to 100% if cooling exhausts into the bay space.</span>
+            </span>
+          </label>
+          <input type="number" id="btmsToRoom" min="0" max="100" step="5" value="100">
+        </div>
+        <div>
+          <label>Ventilation ΔT (°F) for CFM calc</label>
+          <input type="number" id="deltaT" min="5" max="40" step="1" value="10">
+        </div>
+        <div>
+          <label>Safety factor (+%)</label>
+          <input type="number" id="safetyPct" min="0" max="50" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 style="margin-top:0">Vehicle model & pack</h2>
+      <div class="grid grid-3">
+        <div>
+          <label>Truck model</label>
+          <select id="truckModel"></select>
+        </div>
+        <div>
+          <label>Battery capacity (kWh)</label>
+          <input type="number" id="packKWh" min="1" step="1">
+        </div>
+        <div>
+          <label>Vehicle max accept (kW)</label>
+          <input type="number" id="vehMaxKW" min="1" step="1">
+        </div>
+      </div>
+
+      <div class="inline" style="margin-top:10px">
+        <button class="btn" id="recalc">Recalculate</button>
+        <button class="btn ghost" id="reset">Reset</button>
+        <button class="btn alt" id="share">Copy shareable URL</button>
+        <span class="muted">The calculator updates live as you edit.</span>
+      </div>
+
+      <div class="hr"></div>
+      <div class="formula-box">
+        <div class="formula-title">📐 Calculation Method</div>
+        <div class="formula-section">
+          <div class="formula-label">Heat to Space</div>
+          <div class="formula-math">
+            <span class="math-var">Q</span><sub>total</sub> = 
+            [<span class="math-var">P</span> × (1 − <span class="math-var">η</span><sub>charger</sub>) + 
+            <span class="math-var">P</span> × (1 − <span class="math-var">η</span><sub>vehicle</sub>) × 
+            <span class="math-var">f</span><sub>BTMS→room</sub>] × 
+            <span class="math-var">n</span><sub>concurrent</sub> × 
+            <span class="math-var">d</span><sub>diversity</sub> × 
+            (1 + <span class="math-var">s</span><sub>safety</sub>)
+          </div>
+          <div class="formula-note">First term applies only if charger cabinet is located in bay</div>
+        </div>
+        <div class="formula-section">
+          <div class="formula-label">Unit Conversions</div>
+          <div class="formula-grid">
+            <div><span class="math-const">1 kW</span> = <span class="math-const">3,412 BTU/h</span></div>
+            <div><span class="math-const">1 ton</span> = <span class="math-const">12,000 BTU/h</span></div>
+            <div><span class="math-var">W/ft²</span> = (<span class="math-var">kW</span> × 1000) ÷ <span class="math-var">ft²</span></div>
+            <div><span class="math-var">CFM</span> ≈ <span class="math-var">BTU/h</span> ÷ (1.08 × <span class="math-var">ΔT</span>)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Outputs -->
+    <section class="card out">
+      <h2>Results</h2>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="v" id="totalKW">0</div>
+          <div class="u">Total heat to bay (kW)</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="totalBTU">0</div>
+          <div class="u">Total heat to bay (BTU/h)</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="tons">0</div>
+          <div class="u">Cooling tons (12k BTU/h per ton)</div>
+        </div>
+      </div>
+
+      <div class="stats" style="margin-top:12px">
+        <div class="stat">
+          <div class="v" id="wPerSf">0</div>
+          <div class="u">Watts per square foot (W/ft²)</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="cfm">0</div>
+          <div class="u">Estimated ventilation (CFM) @ ΔT</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="perVehKW">0</div>
+          <div class="u">Per-vehicle heat (kW) @ selected power</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <h3>Breakdown</h3>
+      <div class="grid">
+        <div class="stat">
+          <div class="v" id="cabKW">0</div>
+          <div class="u">Charger cabinet → bay (kW)</div>
+          <div class="muted small" id="cabNote"></div>
+        </div>
+        <div class="stat">
+          <div class="v" id="vehKW">0</div>
+          <div class="u">Vehicle/pack BTMS → bay (kW)</div>
+          <div class="muted small" id="vehNote"></div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="flex">
+        <span class="muted">Assumptions:</span>
+        <span class="tag" id="assump1"></span>
+        <span class="tag" id="assump2"></span>
+        <span class="tag" id="assump3"></span>
+      </div>
+    </section>
+  </main>
+
+  <div class="wrap footer">
+    Tip: set <em>BTMS exhaust to room</em> to 0% if the truck's cooling air is ducted outdoors.
+    Hosting: drop this file into a GitHub repo and enable GitHub Pages (main branch → /root), or drag-and-drop to Netlify.
+  </div>
+
+<script>
+/* ---------- Data ---------- */
+const MODELS = [
+  {
+    id: "RTX",
+    name: "Rosenbauer RTX",
+    packKWh: 132,
+    vehMaxKW: 150, // typical DCFC seen in deployments
+  },
+  {
+    id: "VOL",
+    name: "Pierce Volterra",
+    packKWh: 246,
+    vehMaxKW: 150,
+  },
+  {
+    id: "EONE",
+    name: "E-ONE Vector",
+    packKWh: 327,
+    vehMaxKW: 200, // some 800V platforms may accept higher power
+  },
+  {
+    id: "CUSTOM",
+    name: "Custom…",
+    packKWh: 200,
+    vehMaxKW: 150,
+  }
+];
+
+/* ---------- Helpers ---------- */
+const $ = (id)=>document.getElementById(id);
+const fmt = (n,dp=1)=>Number(n).toLocaleString(undefined,{maximumFractionDigits:dp,minimumFractionDigits:dp});
+const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+
+function populateModels(){
+  const sel = $("truckModel");
+  MODELS.forEach(m=>{
+    const o=document.createElement("option");
+    o.value=m.id; o.textContent=m.name;
+    sel.appendChild(o);
+  });
+  sel.value="RTX";
+  applyModel("RTX");
+}
+
+function applyModel(id){
+  const m = MODELS.find(x=>x.id===id) || MODELS[0];
+  $("packKWh").value = m.packKWh;
+  $("vehMaxKW").value = m.vehMaxKW;
+  // If not custom, adjust charge power cap gently (do not override user's explicit value if below cap)
+  const current = Number($("chargePower").value);
+  if(current > m.vehMaxKW){
+    $("chargePower").value = m.vehMaxKW;
+  }
+  recalc();
+}
+
+function readInputs(){
+  const baySf = +$("baySf").value || 0;
+  const vehicles = clamp(+$("numVehicles").value||1,1,999);
+  const concurrent = clamp(+$("concurrent").value||1,1,vehicles);
+  
+  // Auto-adjust concurrent if it exceeds vehicles
+  if(concurrent > vehicles){
+    $("concurrent").value = vehicles;
+  }
+  
+  const chargeType = $("chargeType").value; // L2 or L3
+  let P = +$("chargePower").value || 0;     // kW per vehicle requested
+  const vehMaxKW = +$("vehMaxKW").value || P;
+  P = Math.min(P, vehMaxKW);                 // cap at vehicle max accept
+
+  // Level-2 sanity guide (optional)
+  if(chargeType==="L2" && P>19.2){ P=19.2; $("chargePower").value=19.2; }
+
+  const cabinetIn = $("cabinetLocation").value==="in";
+  const etaCharger = clamp((+$("etaCharger").value||95)/100, 0.80, 0.999);
+  const etaVeh = clamp((+$("etaVehicle").value||92)/100, 0.80, 0.999);
+  const btmsFrac = clamp((+$("btmsToRoom").value||100)/100, 0, 1);
+  const deltaT = clamp(+$("deltaT").value||10, 1, 100);
+  const diversity = clamp(+$("diversity").value||1, 0, 1);
+  const safety = clamp(+$("safetyPct").value||0, 0, 100)/100;
+  const packKWh = +$("packKWh").value || 0;
+
+  return {baySf, vehicles, concurrent, chargeType, P, cabinetIn, etaCharger, etaVeh, btmsFrac, deltaT, diversity, safety, packKWh};
+}
+
+function compute(){
+  const I = readInputs();
+  const coincident = Math.min(I.concurrent, I.vehicles);
+
+  // Per-vehicle heat components (kW)
+  const cabKW_perVeh = (I.cabinetIn ? I.P * (1 - I.etaCharger) : 0);
+  const vehKW_perVeh = I.P * (1 - I.etaVeh) * I.btmsFrac;
+
+  // Totals with concurrency/diversity
+  let totalKW = (cabKW_perVeh + vehKW_perVeh) * coincident * I.diversity;
+
+  // Safety factor
+  totalKW *= (1 + I.safety);
+
+  // Conversions
+  const totalBTUh = totalKW * 3412.0;
+  const tons = totalBTUh / 12000.0;
+  const wPerSf = I.baySf>0 ? (totalKW*1000)/I.baySf : 0;
+  const cfm = I.deltaT>0 ? (totalBTUh)/(1.08 * I.deltaT) : 0;
+
+  return {
+    ...I,
+    coincident,
+    cabKW_perVeh, vehKW_perVeh,
+    totalKW, totalBTUh, tons, wPerSf, cfm
+  };
+}
+
+function render(){
+  const R = compute();
+
+  $("totalKW").textContent = fmt(R.totalKW,2);
+  $("totalBTU").textContent = fmt(R.totalBTUh,0);
+  $("tons").textContent = fmt(R.tons,2);
+  $("wPerSf").textContent = fmt(R.wPerSf,2);
+  $("cfm").textContent = fmt(R.cfm,0);
+  $("perVehKW").textContent = fmt(R.cabKW_perVeh + R.vehKW_perVeh,2);
+
+  $("cabKW").textContent = fmt(R.cabKW_perVeh * R.coincident * R.diversity * (1+R.safety),2);
+  $("vehKW").textContent = fmt(R.vehKW_perVeh * R.coincident * R.diversity * (1+R.safety),2);
+
+  $("cabNote").textContent = R.cabinetIn
+    ? `η_charger=${fmt(R.etaCharger*100,1)}%, cabinet heat is included.`
+    : `Cabinet outdoors, charger losses excluded.`;
+
+  $("vehNote").textContent =
+    `η_veh=${fmt(R.etaVeh*100,1)}%, BTMS to room=${fmt(R.btmsFrac*100,0)}%.`;
+
+  $("assump1").textContent = `Charge type: ${R.chargeType}`;
+  $("assump2").textContent = `Power per vehicle: ${fmt(R.P,0)} kW (up to veh max)`;
+  $("assump3").textContent = `Coincident: ${R.coincident} / ${R.vehicles}, diversity ${fmt(R.diversity*100,0)}%`;
+
+  // Update URL so scenario can be shared
+  const params = new URLSearchParams({
+    sf:R.baySf, 
+    nv:R.vehicles, 
+    cc:R.concurrent, 
+    ct:R.chargeType, 
+    p:R.P,
+    cl:R.cabinetIn?'in':'out', 
+    ec:Math.round(R.etaCharger*1000)/10,
+    ev:Math.round(R.etaVeh*1000)/10, 
+    br:Math.round(R.btmsFrac*100),
+    dt:R.deltaT, 
+    df:R.diversity, 
+    s:Math.round(R.safety*100),
+    pk:R.packKWh, 
+    vm:$("vehMaxKW").value, 
+    tm:$("truckModel").value
+  });
+  const url = `${location.origin}${location.pathname}?${params.toString()}`;
+  history.replaceState(null,"",url);
+}
+
+function recalc(){ render(); }
+
+function reset(){
+  $("baySf").value=3300;
+  $("numVehicles").value=1;
+  $("concurrent").value=1;
+  $("chargeType").value="L3";
+  $("chargePower").value=150;
+  $("cabinetLocation").value="out";
+  $("etaCharger").value=95;
+  $("etaVehicle").value=92;
+  $("btmsToRoom").value=100;
+  $("deltaT").value=10;
+  $("diversity").value=1;
+  $("safetyPct").value=0;
+  $("truckModel").value="RTX";
+  applyModel("RTX");
+  recalc();
+}
+
+function copyShareURL(){
+  navigator.clipboard.writeText(location.href).then(()=>{
+    const btn=$("share"); const prev=btn.textContent;
+    btn.textContent="Copied!";
+    setTimeout(()=>btn.textContent=prev,1200);
+  }).catch(()=>{
+    alert("Copy failed. You can manually copy the address bar URL.");
+  });
+}
+
+function bind(){
+  // Populate models
+  populateModels();
+
+  // Change handlers
+  [
+    "baySf","numVehicles","concurrent","chargeType","chargePower",
+    "cabinetLocation","etaCharger","etaVehicle","btmsToRoom",
+    "deltaT","diversity","safetyPct","packKWh","vehMaxKW"
+  ].forEach(id=>{
+    $(id).addEventListener("input", recalc);
+    $(id).addEventListener("change", recalc);
+  });
+
+  $("truckModel").addEventListener("change", (e)=>{
+    applyModel(e.target.value);
+  });
+
+  $("recalc").addEventListener("click", recalc);
+  $("reset").addEventListener("click", reset);
+  $("share").addEventListener("click", copyShareURL);
+
+  // Load from URL if present
+  const q = new URLSearchParams(location.search);
+  if(q.size){
+    if(q.get("sf")) $("baySf").value=q.get("sf");
+    if(q.get("nv")) $("numVehicles").value=q.get("nv");
+    if(q.get("cc")) $("concurrent").value=q.get("cc");
+    if(q.get("ct")) $("chargeType").value=q.get("ct");
+    if(q.get("p")) $("chargePower").value=q.get("p");
+    if(q.get("cl")) $("cabinetLocation").value=q.get("cl")==="in"?"in":"out";
+    if(q.get("ec")) $("etaCharger").value=q.get("ec");
+    if(q.get("ev")) $("etaVehicle").value=q.get("ev");
+    if(q.get("br")) $("btmsToRoom").value=q.get("br");
+    if(q.get("dt")) $("deltaT").value=q.get("dt");
+    if(q.get("df")) $("diversity").value=q.get("df");
+    if(q.get("s")) $("safetyPct").value=q.get("s");
+    if(q.get("tm")) $("truckModel").value=q.get("tm");
+    if(q.get("pk")) $("packKWh").value=q.get("pk");
+    if(q.get("vm")) $("vehMaxKW").value=q.get("vm");
+  }
+  // Applying model after URL load ensures caps are respected but doesn't overwrite user values unnecessarily.
+  applyModel($("truckModel").value);
+  recalc();
+}
+
+document.addEventListener("DOMContentLoaded", bind);
+</script>
+</body>
+</html>
