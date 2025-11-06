@@ -28,7 +28,7 @@
     border:1px solid #222a3d; border-radius:14px; padding:16px; box-shadow:0 10px 30px #0006;
   }
   .card h2{margin:0 0 10px; font-size:18px}
-  label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px}
+  label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; min-height:32px; line-height:1.3}
   input, select{
     width:100%; background:var(--input); border:1px solid #2a3550; color:var(--text);
     border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
@@ -222,8 +222,7 @@
       </div>
 
       <div class="inline" style="margin-top:10px">
-        <button class="btn" id="recalc">Recalculate</button>
-        <button class="btn ghost" id="reset">Reset</button>
+        <button class="btn ghost" id="reset">Reset to Defaults</button>
         <button class="btn alt" id="share">Copy shareable URL</button>
         <span class="muted">The calculator updates live as you edit.</span>
       </div>
@@ -320,6 +319,28 @@
     Hosting: drop this file into a GitHub repo and enable GitHub Pages (main branch → /root), or drag-and-drop to Netlify.
   </div>
 
+  <div class="wrap" style="max-width:1200px; margin:20px auto; padding:20px; background:linear-gradient(135deg,#2a1a1a,#1a1515); border:1px solid #4a3030; border-radius:12px; box-shadow:0 4px 20px #0008">
+    <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:16px">
+      <div style="font-size:24px; line-height:1">⚠️</div>
+      <div>
+        <div style="font-weight:700; color:#ffb84d; margin-bottom:6px; font-size:14px">Caution</div>
+        <div style="color:#e8d5c5; font-size:13px; line-height:1.5">
+          Created in November 2025. This calculator has not undergone real-world testing or professional certification. 
+          Feedback and field data are very welcome.
+        </div>
+      </div>
+    </div>
+    <div style="padding-top:12px; border-top:1px solid #3a2525; font-size:12px; color:#a89080">
+      <div style="margin-bottom:8px">
+        📘 <a href="https://github.com/BlackRockCity/EV-Fire-Apparatus-Charging-Heat-Calculator/blob/main/README.md" target="_blank" style="color:#7ec8ff; text-decoration:none">View Documentation & README</a>
+      </div>
+      <div>
+        📄 Licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" style="color:#7ec8ff; text-decoration:none">GNU General Public License v3.0</a> 
+        — Free to use, modify, and distribute with attribution.
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ---------- Data ---------- */
 const MODELS = [
@@ -354,6 +375,9 @@ const $ = (id)=>document.getElementById(id);
 const fmt = (n,dp=1)=>Number(n).toLocaleString(undefined,{maximumFractionDigits:dp,minimumFractionDigits:dp});
 const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
 
+// Store the last L3 power value to restore when switching back from L2
+let lastL3Power = 150;
+
 function populateModels(){
   const sel = $("truckModel");
   MODELS.forEach(m=>{
@@ -369,11 +393,19 @@ function applyModel(id){
   const m = MODELS.find(x=>x.id===id) || MODELS[0];
   $("packKWh").value = m.packKWh;
   $("vehMaxKW").value = m.vehMaxKW;
-  // If not custom, adjust charge power cap gently (do not override user's explicit value if below cap)
+  
+  // Adjust charge power cap - if current power exceeds vehicle max, cap it
   const current = Number($("chargePower").value);
   if(current > m.vehMaxKW){
     $("chargePower").value = m.vehMaxKW;
   }
+  
+  // Also check Level 2 constraint
+  const chargeType = $("chargeType").value;
+  if(chargeType === "L2" && $("chargePower").value > 19.2){
+    $("chargePower").value = 19.2;
+  }
+  
   recalc();
 }
 
@@ -390,10 +422,15 @@ function readInputs(){
   const chargeType = $("chargeType").value; // L2 or L3
   let P = +$("chargePower").value || 0;     // kW per vehicle requested
   const vehMaxKW = +$("vehMaxKW").value || P;
-  P = Math.min(P, vehMaxKW);                 // cap at vehicle max accept
-
-  // Level-2 sanity guide (optional)
-  if(chargeType==="L2" && P>19.2){ P=19.2; $("chargePower").value=19.2; }
+  
+  // Level-2 sanity guide - cap at 19.2 kW and update display
+  if(chargeType==="L2" && P>19.2){ 
+    P=19.2; 
+    $("chargePower").value=19.2; 
+  }
+  
+  // Cap at vehicle max accept
+  P = Math.min(P, vehMaxKW);
 
   const cabinetIn = $("cabinetLocation").value==="in";
   const etaCharger = clamp((+$("etaCharger").value||95)/100, 0.80, 0.999);
@@ -404,7 +441,7 @@ function readInputs(){
   const safety = clamp(+$("safetyPct").value||0, 0, 100)/100;
   const packKWh = +$("packKWh").value || 0;
 
-  return {baySf, vehicles, concurrent, chargeType, P, cabinetIn, etaCharger, etaVeh, btmsFrac, deltaT, diversity, safety, packKWh};
+  return {baySf, vehicles, concurrent, chargeType, P, cabinetIn, etaCharger, etaVeh, btmsFrac, deltaT, diversity, safety, packKWh, vehMaxKW};
 }
 
 function compute(){
@@ -529,7 +566,26 @@ function bind(){
     applyModel(e.target.value);
   });
 
-  $("recalc").addEventListener("click", recalc);
+  $("chargeType").addEventListener("change", ()=>{
+    const chargeType = $("chargeType").value;
+    const currentPower = Number($("chargePower").value);
+    
+    if(chargeType === "L2"){
+      // Switching TO L2: save current value if it's > 19.2, then cap at 19.2
+      if(currentPower > 19.2){
+        lastL3Power = currentPower;
+        $("chargePower").value = 19.2;
+      }
+    } else if(chargeType === "L3"){
+      // Switching back TO L3: restore the saved L3 value
+      if(currentPower === 19.2 || currentPower < 19.2){
+        $("chargePower").value = lastL3Power;
+      }
+    }
+    
+    recalc();
+  });
+
   $("reset").addEventListener("click", reset);
   $("share").addEventListener("click", copyShareURL);
 
