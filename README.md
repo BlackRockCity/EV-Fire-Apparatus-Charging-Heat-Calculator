@@ -148,7 +148,7 @@ Just copy the address bar to share an exact scenario with colleagues.
 
 ### 🖼️ Screenshot
 
-![EV Fire Apparatus Calculator UI](./docs/screenshot.png)
+![EV Fire Apparatus Calculator UI](./docs/screenshot_v17.png)
 
 ---
 
