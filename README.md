@@ -346,11 +346,14 @@ Do not commit:
 
 ## Screenshot
 
-![/docs/screenshot_v17.png]()
+### Calculator App
 
+![EV fire apparatus charging heat calculator app screenshot](./docs/App_Screenshot_v19.png)
 
+### Printable Report
 
-![Report_Screenshot_v19]()
+![EV fire apparatus charging heat calculator report screenshot](./docs/Report_Screenshot_v19.png)
+
 
 ## Version History
 
