@@ -6,8 +6,9 @@ A browser-based HVAC planning calculator for estimating sensible heat load from 
 
 The calculator runs from the static [`index.html`](index.html) file and supports I-P and SI units, multiple languages, saved scenarios, shareable URLs, and printable localized HTML reports.
 
-> **Caution:** Created in November 2025. This calculator has not undergone real-world testing or professional certification. Confirm assumptions with OEMs, qualified HVAC designers, and the authority having jurisdiction.
-
+> ⚠️ **Caution:** Created in November 2025. This calculator has not undergone real-world testing or professional certification. Confirm assumptions with OEMs, qualified HVAC designers, and the authority having jurisdiction.
+---
+###### Use the caluclator: https://blackrockcity.github.io/EV-Fire-Apparatus-Charging-Heat-Calculator
 ---
 
 ###### ☕ https://buymeacoffee.com/blackrockcity
