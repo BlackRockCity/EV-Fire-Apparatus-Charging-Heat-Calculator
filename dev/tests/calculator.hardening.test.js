@@ -193,6 +193,29 @@ describe("normal calculation scenarios", () => {
     assertNoUnsafeRenderedOutput(dom.window);
   });
 
+  it("renders a secure localized Buy Me a Coffee footer link", () => {
+    const { document, I18N } = dom.window;
+    const link = document.getElementById("buyMeCoffeeLink");
+
+    expect(link).not.toBeNull();
+    expect(link.getAttribute("href")).toBe("https://buymeacoffee.com/blackrockcity");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link.textContent).toContain("☕");
+
+    for (const [code, dictionary] of Object.entries(I18N)) {
+      expect(dictionary).toHaveProperty("buyMeCoffee");
+      expect(dictionary.buyMeCoffee, `${code}.buyMeCoffee`).toContain("☕");
+      expectNoPlaceholderText(dictionary.buyMeCoffee, `${code}.buyMeCoffee`);
+      if (code !== "en") {
+        expect(dictionary.buyMeCoffee, `${code}.buyMeCoffee`).not.toBe(I18N.en.buyMeCoffee);
+      }
+    }
+
+    dom.window.applyLanguage("de");
+    expect(link.textContent).toBe(I18N.de.buyMeCoffee);
+  });
+
   it("calculates one Rosenbauer RTX at 150 kW with cabinet in bay", () => {
     addTruck(dom.window);
 

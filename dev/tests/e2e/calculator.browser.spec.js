@@ -78,6 +78,16 @@ test("basic load renders finite zero results for empty inventory", async ({ page
   await expectNoUnsafeVisibleOutput(page);
 });
 
+test("footer shows a secure external Buy Me a Coffee link", async ({ page }) => {
+  const link = page.locator("#buyMeCoffeeLink");
+
+  await expect(link).toBeVisible();
+  await expect(link).toContainText("☕");
+  await expect(link).toHaveAttribute("href", "https://buymeacoffee.com/blackrockcity");
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+});
+
 test("default Rosenbauer RTX calculation renders expected heat", async ({ page }) => {
   await addDefaultTruck(page);
 

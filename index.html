@@ -732,6 +732,9 @@
         📄 Licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" style="color:#7ec8ff; text-decoration:none">GNU General Public License v3.0</a> 
         — Free to use, modify, and distribute with attribution.
       </div>
+      <div style="margin-top:8px">
+        <a id="buyMeCoffeeLink" href="https://buymeacoffee.com/blackrockcity" target="_blank" rel="noopener noreferrer" style="color:#7ec8ff; text-decoration:none">☕ Buy me a coffee</a>
+      </div>
     </div>
   </div>
 
@@ -878,6 +881,7 @@ const I18N_EN = {
   documentationReadme: "View Documentation & README",
   licenseText: "Licensed under",
   licenseTail: "Free to use, modify, and distribute with attribution.",
+  buyMeCoffee: "☕ Buy me a coffee",
   removeTruck: "Remove truck",
   toggleChargingFor: "Toggle charging for {name}",
   warningClamped: "Some inputs were outside safe limits and were clamped.",
@@ -3333,6 +3337,32 @@ const ADDITIONAL_I18N = {
   }
 };
 Object.entries(ADDITIONAL_I18N).forEach(([code, entries]) => { I18N[code] = entries; });
+const BUY_ME_COFFEE_I18N = {
+  en: "☕ Buy me a coffee",
+  "zh-Hans": "☕ 请我喝杯咖啡",
+  es: "☕ Invítame a un café",
+  fr: "☕ Offrez-moi un café",
+  de: "☕ Spendiere mir einen Kaffee",
+  ja: "☕ コーヒーをごちそうする",
+  ko: "☕ 커피 한 잔 사주기",
+  pt: "☕ Pague-me um café",
+  ar: "☕ اشترِ لي قهوة",
+  hi: "☕ मुझे एक कॉफी पिलाएँ",
+  bn: "☕ আমাকে এক কাপ কফি কিনে দিন",
+  id: "☕ Traktir saya kopi",
+  ur: "☕ مجھے ایک کافی پلائیں",
+  ru: "☕ Угостить меня кофе",
+  it: "☕ Offrimi un caffè",
+  vi: "☕ Mời tôi một ly cà phê",
+  tr: "☕ Bana bir kahve ısmarla",
+  th: "☕ เลี้ยงกาแฟฉันสักแก้ว",
+  fa: "☕ برایم یک قهوه بخر",
+  sw: "☕ Ninunulie kahawa",
+  "zh-Hant": "☕ 請我喝杯咖啡"
+};
+Object.entries(BUY_ME_COFFEE_I18N).forEach(([code, label]) => {
+  I18N[code].buyMeCoffee = label;
+});
 ["es","pt","fr","de","zh-Hans"].forEach(code => {
   Object.keys(I18N.en).forEach(key => {
     if(key === "unitPill") return;
@@ -4026,6 +4056,8 @@ function applyI18n(lang = currentLanguage){
     if(licenseLine && links[1]){
       licenseLine.replaceChildren(document.createTextNode(`📄 ${t("licenseText")} `), links[1], document.createTextNode(` — ${t("licenseTail")}`));
     }
+    const buyMeCoffeeLink = document.getElementById("buyMeCoffeeLink");
+    if(buyMeCoffeeLink) buyMeCoffeeLink.textContent = t("buyMeCoffee");
   }
 
   populateScenarioSelect();
