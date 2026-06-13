@@ -170,11 +170,47 @@ function expectNoUntranslatedFragments(text, context) {
 
 const placeholderTextPattern = /localized text|localised text|Texto localizado|Texte localisé|(^|\s)(TODO|TRANSLATE|TBD|placeholder|untranslated)(\s|$|:)|ローカライズ|翻訳テキスト|プレースホルダー|(^|\s)説明(\s|$|:)|현지화|현지화된 텍스트|번역 텍스트|자리 표시자|(^|\s)설명(\s|$|:)|نص مترجم|نص محلي|عنصر نائب|(^|\s)ترجمة(\s|$|:)|^شرح$|स्थानीयकृत पाठ|अनुवादित पाठ|प्लेसहोल्डर|(^|\s)विवरण(\s|$|:)/i;
 const additionalPlaceholderTextPattern = /স্থানীয়কৃত পাঠ|অনুবাদ|প্লেসহোল্ডার|(^|\s)বিবরণ(\s|$|:)|teks lokal|teks terjemahan|(^|\s)(placeholder|deskripsi)(\s|$|:)|مقامی متن|ترجمہ شدہ متن|پلیس ہولڈر|(^|\s)تفصیل(\s|$|:)|локализованный текст|(^|\s)(перевод|заполнитель|описание)(\s|$|:)|testo localizzato|testo tradotto|segnaposto|(^|\s)descrizione(\s|$|:)|văn bản được bản địa hóa|văn bản dịch|trình giữ chỗ|(^|\s)mô tả(\s|$|:)|yerelleştirilmiş metin|çeviri metni|yer tutucu|(^|\s)açıklama(\s|$|:)|ข้อความที่แปลแล้ว|ข้อความท้องถิ่น|ตัวยึดตำแหน่ง|(^|\s)คำอธิบาย(\s|$|:)|متن محلی|متن ترجمه‌شده|جای‌نگهدار|(^|\s)توضیح(\s|$|:)|maandishi yaliyotafsiriwa|maandishi ya ndani|kishika nafasi|(^|\s)maelezo(\s|$|:)|本地化文字|翻譯文字|佔位符|(^|\s)說明(\s|$|:)/i;
+const europeanPlaceholderTextPattern = /gelokaliseerde tekst|vertaalde tekst|tijdelijke aanduiding|(^|\s)beschrijving(\s|$|:)|tekst zlokalizowany|przet[łl]umaczony tekst|symbol zast[eę]pczy|(^|\s)opis(\s|$|:)|lokaliserad text|[öo]versatt text|platsh[åa]llare|(^|\s)beskrivning(\s|$|:)|lokaliseret tekst|oversat tekst|pladsholder|lokalisert tekst|oversatt tekst|plassholder|lokalisoitu teksti|k[äa][äa]nnetty teksti|paikkamerkki|(^|\s)kuvaus(\s|$|:)|lokalizovan[ýy] text|p[řr]elo[žz]en[ýy] text|z[áa]stupn[ýy] symbol|(^|\s)popis(\s|$|:)|τοπικοποιημένο κείμενο|μεταφρασμένο κείμενο|σύμβολο κράτησης|(^|\s)περιγραφή(\s|$|:)|טקסט מקומי|טקסט מתורגם|מציין מיקום|(^|\s)תיאור(\s|$|:)|lokaliz[áa]lt sz[öo]veg|leford[íi]tott sz[öo]veg|hely[őo]rz[őo]|(^|\s)le[íi]r[áa]s(\s|$|:)/i;
 const additionalLanguageCodes = ["bn", "id", "ur", "ru", "it", "vi", "tr", "th", "fa", "sw", "zh-Hant"];
+const newLanguageCodes = ["nl", "pl", "sv", "da", "nb", "fi", "cs", "el", "he", "hu"];
+const expectedLanguageOptions = [
+  ["en", "🇺🇸 English"],
+  ["zh-Hans", "🇨🇳 简体中文"],
+  ["es", "🇲🇽 Español"],
+  ["fr", "🇫🇷 Français"],
+  ["de", "🇩🇪 Deutsch"],
+  ["ja", "🇯🇵 日本語"],
+  ["ko", "🇰🇷 한국어"],
+  ["pt", "🇧🇷 Português"],
+  ["ar", "🇪🇬 العربية"],
+  ["hi", "🇮🇳 हिन्दी"],
+  ["bn", "🇧🇩 বাংলা"],
+  ["id", "🇮🇩 Bahasa Indonesia"],
+  ["ur", "🇵🇰 اردو"],
+  ["ru", "🇷🇺 Русский"],
+  ["it", "🇮🇹 Italiano"],
+  ["vi", "🇻🇳 Tiếng Việt"],
+  ["tr", "🇹🇷 Türkçe"],
+  ["th", "🇹🇭 ไทย"],
+  ["fa", "🇮🇷 فارسی"],
+  ["sw", "🇹🇿 Kiswahili"],
+  ["zh-Hant", "🇹🇼 繁體中文"],
+  ["nl", "🇳🇱 Nederlands"],
+  ["pl", "🇵🇱 Polski"],
+  ["sv", "🇸🇪 Svenska"],
+  ["da", "🇩🇰 Dansk"],
+  ["nb", "🇳🇴 Norsk bokmål"],
+  ["fi", "🇫🇮 Suomi"],
+  ["cs", "🇨🇿 Čeština"],
+  ["el", "🇬🇷 Ελληνικά"],
+  ["he", "🇮🇱 עברית"],
+  ["hu", "🇭🇺 Magyar"]
+];
 
 function expectNoPlaceholderText(text, context) {
   expect(text, context).not.toMatch(placeholderTextPattern);
   expect(text, context).not.toMatch(additionalPlaceholderTextPattern);
+  expect(text, context).not.toMatch(europeanPlaceholderTextPattern);
 }
 
 describe("normal calculation scenarios", () => {
@@ -566,13 +602,13 @@ describe("UI summary, presets, and report mode", () => {
 
   it("localizes static controls, attributes, presets, dynamic copy, and report labels", () => {
     const dom = createApp();
-    const expectedCodes = ["en", "zh-Hans", "es", "fr", "de", "ja", "ko", "pt", "ar", "hi", ...additionalLanguageCodes];
+    const expectedCodes = expectedLanguageOptions.map(([code]) => code);
 
     expect(dom.window.I18N.en.appTitle).toBe("EV Fire Apparatus Charging Heat Calculator");
     expect(dom.window.document.getElementById("languageSelect").value).toBe("en");
     expect(dom.window.document.querySelector("[data-i18n='appTitle']").textContent).toContain("EV Fire Apparatus");
-    const optionValues = Array.from(dom.window.document.querySelectorAll("#languageSelect option")).map(option => option.value);
-    expect(optionValues).toEqual(expectedCodes);
+    const options = Array.from(dom.window.document.querySelectorAll("#languageSelect option")).map(option => [option.value, option.textContent]);
+    expect(options).toEqual(expectedLanguageOptions);
     for (const code of expectedCodes) {
       expect(Object.keys(dom.window.I18N[code]).sort()).toEqual(Object.keys(dom.window.I18N.en).sort());
       for (const [key, value] of Object.entries(dom.window.I18N[code])) {
@@ -752,6 +788,57 @@ describe("UI summary, presets, and report mode", () => {
       if (["ur", "fa"].includes(lang)) {
         expect(report, lang).toContain(`lang="${lang}" dir="rtl"`);
         expect(report, lang).toContain('class="formula-ltr" dir="ltr"');
+      }
+    }
+  });
+
+  it("fully localizes the 10 European and Middle Eastern additions", () => {
+    const dom = createApp();
+    addTruck(dom.window);
+    const { document, I18N } = dom.window;
+
+    for (const lang of newLanguageCodes) {
+      dom.window.localStorage.removeItem("evHeatCalc.units");
+      dom.window.localStorage.removeItem("evHeatCalc.unitsManual");
+      dom.window.unitsManual = false;
+      dom.window.applyLanguage(lang);
+
+      expect(Object.keys(I18N[lang]).sort(), lang).toEqual(Object.keys(I18N.en).sort());
+      for (const [key, value] of Object.entries(I18N[lang])) {
+        expect(value, `${lang}.${key}`).not.toBe("");
+        expect(value, `${lang}.${key}`).not.toBeNull();
+        expect(value, `${lang}.${key}`).not.toBeUndefined();
+        expectNoPlaceholderText(String(value), `${lang}.${key}`);
+      }
+
+      expect(document.getElementById("unitsSelect").value, lang).toBe("si");
+      expect(document.querySelector("[data-i18n='appTitle']").textContent, lang).toBe(I18N[lang].appTitle);
+      expect(document.querySelector(".left-column > section.card:first-of-type h2").textContent, lang).toBe(I18N[lang].scenarioTitle);
+      expect(document.querySelector(".right-column .card.out h2").textContent, lang).toBe(I18N[lang].resultsTitle);
+      expect(document.querySelector(".left-column section:nth-of-type(4) h2").textContent, lang).toBe(I18N[lang].fleetTitle);
+      expect(document.getElementById("scenarioName").placeholder, lang).toBe(I18N[lang].saveNamePlaceholder);
+      expect(document.querySelector(".computed-field:first-child .tooltip-text").textContent, lang).toBe(I18N[lang].vehiclesTotalTooltip);
+      expect(document.getElementById("reset").textContent, lang).toBe(I18N[lang].resetDefaults);
+      expect(document.getElementById("buyMeCoffeeLink").textContent, lang).toBe(I18N[lang].buyMeCoffee);
+      expect(document.querySelector(".headline-values .main").textContent, lang).toMatch(/kW$/);
+      expectNoPlaceholderText(visibleGuiText(document), `visible GUI ${lang}`);
+
+      const expectedDirection = lang === "he" ? "rtl" : "ltr";
+      expect(document.documentElement.dir, lang).toBe(expectedDirection);
+      expect(document.getElementById("populatedEquation").style.direction || dom.window.getComputedStyle(document.getElementById("populatedEquation")).direction, lang).toBe("ltr");
+    }
+
+    for (const lang of ["nl", "pl", "el", "he", "hu"]) {
+      dom.window.applyLanguage(lang);
+      const report = dom.window.generateReportHTML();
+      expect(report, lang).toContain(I18N[lang].reportSubtitle);
+      expect(report, lang).toContain(I18N[lang].printReport);
+      expect(report, lang).toContain(I18N[lang].reportHeadlineResults);
+      expect(report, lang).toContain("m²");
+      expectNoPlaceholderText(report, `report ${lang}`);
+      if (lang === "he") {
+        expect(report).toContain('lang="he" dir="rtl"');
+        expect(report).toContain('class="formula-ltr" dir="ltr"');
       }
     }
   });

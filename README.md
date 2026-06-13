@@ -39,8 +39,8 @@ The calculator runs from the static [`index.html`](index.html) file and supports
 
 - Unit selector for Imperial / I-P and Metric / SI workflows.
 - I-P and SI outputs, with kW retained in both modes.
-- Language selector with localized interface and report text for ***21 major languages!***
-- Arabic RTL layout mirroring, while keeping formulas and equation blocks LTR for readability.
+- Language selector with localized interface and report text for ***31 major languages!***
+- RTL layout mirroring for Arabic, Urdu, Persian/Farsi, and Hebrew, while keeping formulas and equation blocks LTR for readability.
 
 ### Scenarios, Sharing, and Reports
 
@@ -234,6 +234,20 @@ Supported languages:
 - Persian / Farsi
 - Swahili
 - Traditional Chinese
+- Dutch
+- Polish
+- Swedish
+
+</td>
+<td>
+
+- Danish
+- Norwegian Bokmål
+- Finnish
+- Czech
+- Greek
+- Hebrew
+- Hungarian
 
 </td>
 </tr>
@@ -358,6 +372,7 @@ Do not commit:
 
 ## Version History
 
+- `2.3.0`: Dutch, Polish, Swedish, Danish, Norwegian Bokmål, Finnish, Czech, Greek, Hebrew, and Hungarian localization, including Hebrew RTL support and population-center emoji markers in the language selector.
 - `2.2.0`: Bengali, Indonesian, Urdu, Russian, Italian, Vietnamese, Turkish, Thai, Persian/Farsi, Swahili, and Traditional Chinese localization, including localized reports and RTL support for Urdu and Persian.
 - `2.1.0`: I-P/SI unit selector, localized unit displays, localized reports with units, share URL unit state, saved scenario unit metadata.
 - `2.0.0`: hardening, automated tests, localization, presets/saved scenarios, HTML report mode.

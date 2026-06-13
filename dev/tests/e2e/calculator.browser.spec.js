@@ -41,7 +41,7 @@ async function expectNoUnsafeVisibleOutput(page) {
 }
 
 async function expectNoPlaceholderText(page) {
-  await expect(page.locator("body")).not.toContainText(/Localized text|localized text|localised text|Texto localizado|Texte localisé|(^|\s)(placeholder|TODO|TRANSLATE|untranslated)(\s|$|:)|ローカライズ|翻訳テキスト|プレースホルダー|(^|\s)説明(\s|$|:)|현지화|현지화된 텍스트|번역 텍스트|자리 표시자|(^|\s)설명(\s|$|:)|نص مترجم|نص محلي|عنصر نائب|(^|\s)ترجمة(\s|$|:)|^شرح$|स्थानीयकृत पाठ|अनुवादित पाठ|प्लेसहोल्डर|(^|\s)विवरण(\s|$|:)|স্থানীয়কৃত পাঠ|অনুবাদ|প্লেসহোল্ডার|(^|\s)বিবরণ(\s|$|:)|teks lokal|teks terjemahan|(^|\s)(deskripsi)(\s|$|:)|مقامی متن|ترجمہ شدہ متن|پلیس ہولڈر|(^|\s)تفصیل(\s|$|:)|локализованный текст|(^|\s)(перевод|заполнитель|описание)(\s|$|:)|testo localizzato|testo tradotto|segnaposto|(^|\s)descrizione(\s|$|:)|văn bản được bản địa hóa|văn bản dịch|trình giữ chỗ|(^|\s)mô tả(\s|$|:)|yerelleştirilmiş metin|çeviri metni|yer tutucu|(^|\s)açıklama(\s|$|:)|ข้อความที่แปลแล้ว|ข้อความท้องถิ่น|ตัวยึดตำแหน่ง|(^|\s)คำอธิบาย(\s|$|:)|متن محلی|متن ترجمه‌شده|جای‌نگهدار|(^|\s)توضیح(\s|$|:)|maandishi yaliyotafsiriwa|maandishi ya ndani|kishika nafasi|(^|\s)maelezo(\s|$|:)|本地化文字|翻譯文字|佔位符|(^|\s)說明(\s|$|:)/i);
+  await expect(page.locator("body")).not.toContainText(/Localized text|localized text|localised text|Texto localizado|Texte localisé|(^|\s)(placeholder|TODO|TRANSLATE|untranslated)(\s|$|:)|gelokaliseerde tekst|vertaalde tekst|tijdelijke aanduiding|tekst zlokalizowany|przet[łl]umaczony tekst|symbol zast[eę]pczy|lokaliserad text|[öo]versatt text|platsh[åa]llare|lokaliseret tekst|oversat tekst|pladsholder|lokalisert tekst|oversatt tekst|plassholder|lokalisoitu teksti|k[äa][äa]nnetty teksti|paikkamerkki|lokalizovan[ýy] text|p[řr]elo[žz]en[ýy] text|z[áa]stupn[ýy] symbol|τοπικοποιημένο κείμενο|μεταφρασμένο κείμενο|σύμβολο κράτησης|טקסט מקומי|טקסט מתורגם|מציין מיקום|lokaliz[áa]lt sz[öo]veg|leford[íi]tott sz[öo]veg|hely[őo]rz[őo]|ローカライズ|翻訳テキスト|プレースホルダー|현지화|번역 텍스트|자리 표시자|نص مترجم|نص محلي|عنصر نائب|स्थानीयकृत पाठ|अनुवादित पाठ|प्लेसहोल्डर|স্থানীয়কৃত পাঠ|প্লেসহোল্ডার|teks lokal|teks terjemahan|مقامی متن|پلیس ہولڈر|локализованный текст|заполнитель|testo localizzato|segnaposto|văn bản được bản địa hóa|trình giữ chỗ|yerelleştirilmiş metin|yer tutucu|ข้อความที่แปลแล้ว|ตัวยึดตำแหน่ง|متن محلی|جای‌نگهدار|maandishi yaliyotafsiriwa|kishika nafasi|本地化文字|佔位符/i);
 }
 
 const additionalLanguages = [
@@ -56,6 +56,31 @@ const additionalLanguages = [
   ["fa", "فارسی"],
   ["sw", "Kiswahili"],
   ["zh-Hant", "繁體中文"]
+];
+const newLanguages = [
+  ["nl", "Nederlands"],
+  ["pl", "Polski"],
+  ["sv", "Svenska"],
+  ["da", "Dansk"],
+  ["nb", "Norsk bokmål"],
+  ["fi", "Suomi"],
+  ["cs", "Čeština"],
+  ["el", "Ελληνικά"],
+  ["he", "עברית"],
+  ["hu", "Magyar"]
+];
+const expectedLanguageOptions = [
+  ["en", "🇺🇸 English"], ["zh-Hans", "🇨🇳 简体中文"], ["es", "🇲🇽 Español"],
+  ["fr", "🇫🇷 Français"], ["de", "🇩🇪 Deutsch"], ["ja", "🇯🇵 日本語"],
+  ["ko", "🇰🇷 한국어"], ["pt", "🇧🇷 Português"], ["ar", "🇪🇬 العربية"],
+  ["hi", "🇮🇳 हिन्दी"], ["bn", "🇧🇩 বাংলা"], ["id", "🇮🇩 Bahasa Indonesia"],
+  ["ur", "🇵🇰 اردو"], ["ru", "🇷🇺 Русский"], ["it", "🇮🇹 Italiano"],
+  ["vi", "🇻🇳 Tiếng Việt"], ["tr", "🇹🇷 Türkçe"], ["th", "🇹🇭 ไทย"],
+  ["fa", "🇮🇷 فارسی"], ["sw", "🇹🇿 Kiswahili"], ["zh-Hant", "🇹🇼 繁體中文"],
+  ["nl", "🇳🇱 Nederlands"], ["pl", "🇵🇱 Polski"], ["sv", "🇸🇪 Svenska"],
+  ["da", "🇩🇰 Dansk"], ["nb", "🇳🇴 Norsk bokmål"], ["fi", "🇫🇮 Suomi"],
+  ["cs", "🇨🇿 Čeština"], ["el", "🇬🇷 Ελληνικά"], ["he", "🇮🇱 עברית"],
+  ["hu", "🇭🇺 Magyar"]
 ];
 
 async function addDefaultTruck(page) {
@@ -244,8 +269,8 @@ test("saved scenario can be saved, applied, and deleted", async ({ page }) => {
 });
 
 test("language selector localizes controls while Arabic keeps formulas LTR", async ({ page }) => {
-  const values = await page.locator("#languageSelect option").evaluateAll(options => options.map(option => option.value));
-  expect(values).toEqual(["en", "zh-Hans", "es", "fr", "de", "ja", "ko", "pt", "ar", "hi", ...additionalLanguages.map(([code]) => code)]);
+  const options = await page.locator("#languageSelect option").evaluateAll(items => items.map(option => [option.value, option.textContent]));
+  expect(options).toEqual(expectedLanguageOptions);
 
   await page.locator("#languageSelect").selectOption("de");
   await expect(page.locator("[data-i18n='appTitle']")).toContainText("Wärmerechner");
@@ -264,6 +289,66 @@ test("language selector localizes controls while Arabic keeps formulas LTR", asy
   await expect(page.locator(".formula-math").first()).toHaveCSS("direction", "ltr");
   await expect(page.locator("#populatedEquation")).toHaveCSS("direction", "ltr");
   await expectNoUnsafeVisibleOutput(page);
+});
+
+test("all 10 new languages localize the app and preserve direction and units", async ({ page }) => {
+  await addDefaultTruck(page);
+
+  for (const [lang] of newLanguages) {
+    await page.locator("#languageSelect").selectOption(lang);
+    await expect(page.locator("#unitsSelect"), lang).toHaveValue("si");
+    await expect(page.locator(".headline-values .main"), lang).toContainText("kW");
+    await expect(page.locator("[data-i18n='appTitle']"), lang).not.toHaveText("EV Fire Apparatus Charging Heat Calculator");
+    await expect(page.locator(".left-column > section.card").first().locator("h2"), lang).not.toHaveText("Scenario");
+    await expect(page.locator(".right-column .card.out h2"), lang).not.toHaveText("Results");
+    await expect(page.locator(".left-column section").nth(3).locator("h2"), lang).not.toHaveText("Fleet Inventory");
+    await expect(page.locator("#scenarioSaveCard h2"), lang).not.toHaveText("Save Scenario");
+    await expect(page.locator("#reset"), lang).not.toHaveText("Reset to Defaults");
+    await expect(page.locator("#openReport"), lang).not.toHaveText("Open Report");
+    await expect(page.locator("#scenarioName"), lang).not.toHaveAttribute("placeholder", "Name this scenario…");
+    await expect(page.locator(".computed-field:first-child .tooltip-text"), lang).not.toContainText("Automatically calculated");
+    await expectNoPlaceholderText(page);
+    await expect(page.locator("html"), lang).toHaveAttribute("dir", lang === "he" ? "rtl" : "ltr");
+    await expect(page.locator("#populatedEquation"), lang).toHaveCSS("direction", "ltr");
+  }
+});
+
+test("representative emoji-labeled options remain usable in responsive headers", async ({ page }) => {
+  for (const [code, label] of expectedLanguageOptions.filter(([code]) => ["en", "es", "pt", "ar", "sw", "he"].includes(code))) {
+    await expect(page.locator(`#languageSelect option[value="${code}"]`)).toHaveText(label);
+  }
+
+  await page.locator("#languageSelect").selectOption("he");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator("[data-i18n='appTitle']")).not.toHaveText("EV Fire Apparatus Charging Heat Calculator");
+
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expect(page.locator("#languageSelect")).toBeVisible();
+    await expect(page.locator("#unitsSelect")).toBeVisible();
+  }
+});
+
+test("Dutch, Polish, Hebrew, and Greek reports are localized", async ({ page, context }) => {
+  await addDefaultTruck(page);
+
+  for (const lang of ["nl", "pl", "he", "el"]) {
+    await page.locator("#languageSelect").selectOption(lang);
+    const popupPromise = context.waitForEvent("page");
+    await page.locator("#openReport").click();
+    const report = await popupPromise;
+    await report.waitForLoadState("domcontentloaded");
+    await expect(report.locator("body"), lang).toContainText("19.50 kW / 66,534 BTU/h");
+    await expect(report.locator("body"), lang).not.toContainText("Scenario Report");
+    await expect(report.locator("body"), lang).not.toContainText("Print / Save as PDF");
+    await expect(report.locator("body"), lang).toContainText("m²");
+    await expectNoPlaceholderText(report);
+    if (lang === "he") {
+      await expect(report.locator("html")).toHaveAttribute("dir", "rtl");
+      await expect(report.locator(".formula-ltr").first()).toHaveCSS("direction", "ltr");
+    }
+    await report.close();
+  }
 });
 
 test("long localized header keeps controls grouped across responsive widths", async ({ page }) => {
