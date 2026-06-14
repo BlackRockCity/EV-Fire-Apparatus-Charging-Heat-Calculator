@@ -1,14 +1,21 @@
 # EV Fire Apparatus Charging Heat Calculator
 
-**Current version: 2.3.0**
+**Current version: 2.3.0
 
-A browser-based HVAC planning calculator for estimating sensible heat load from EV fire apparatus charging (e.g., Rosenbauer RTX, Pierce Volterra, E-ONE Vector). The app converts charger and vehicle losses into electrical and HVAC planning units so apparatus bay loads can be reviewed in kW, BTU/h, refrigeration tons, load intensity, and ventilation or airflow terms.
+<img src="./docs/assets/FiretrucksSVG-iOS-Default-1024x1024@1x.png" alt="PackageSwitcher icon" width="90" align="right">
+
+<p>
+  A browser-based HVAC planning calculator for estimating sensible heat load from EV fire apparatus charging (e.g., Rosenbauer RTX, Pierce Volterra, E-ONE Vector). The app converts charger and vehicle losses into electrical and HVAC planning units so apparatus bay loads can be reviewed in kW, BTU/h, refrigeration tons, load intensity, and ventilation or airflow terms.
+</p>
 
 The calculator runs from the static [`index.html`](index.html) file and supports I-P and SI units, multiple languages, saved scenarios, shareable URLs, and printable localized HTML reports.
 
 > ⚠️ **Caution:** Created in November 2025. This calculator has not undergone real-world testing or professional certification. Confirm assumptions with OEMs, qualified HVAC designers, and the authority having jurisdiction.
+
 ---
+
 ###### Use the caluclator: https://blackrockcity.github.io/EV-Fire-Apparatus-Charging-Heat-Calculator
+
 ---
 
 ###### ☕ https://buymeacoffee.com/blackrockcity
@@ -368,7 +375,6 @@ Do not commit:
 ### Printable Report
 
 ![EV fire apparatus charging heat calculator report screenshot](./docs/Report_Screenshot_v19.png)
-
 
 ## Version History
 
