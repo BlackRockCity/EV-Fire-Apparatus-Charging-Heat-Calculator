@@ -2,7 +2,7 @@
 
 **Current version: 2.3.0
 
-<img src="./docs/assets/FiretrucksSVG-iOS-Default-1024x1024@1x.png" alt="PackageSwitcher icon" width="90" align="right">
+<img src="./docs/assets/FiretrucksSVG-iOS-Default-1024x1024@1x.png" alt="EV Charger and Fire Trucks icon" width="90" align="right">
 
 <p>
   A browser-based HVAC planning calculator for estimating sensible heat load from EV fire apparatus charging (e.g., Rosenbauer RTX, Pierce Volterra, E-ONE Vector). The app converts charger and vehicle losses into electrical and HVAC planning units so apparatus bay loads can be reviewed in kW, BTU/h, refrigeration tons, load intensity, and ventilation or airflow terms.
