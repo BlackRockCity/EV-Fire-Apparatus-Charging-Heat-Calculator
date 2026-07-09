@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
 
 const resultIds = [
   "totalKW",
@@ -682,8 +683,19 @@ test("Open Report creates safe report tab", async ({ page, context }) => {
 
   await expect(report.getByText("Scenario Report")).toBeVisible();
   await expect(report.getByText("Print / Save as PDF")).toBeVisible();
+  await expect(report.getByText("Download Excel")).toBeVisible();
   await expect(report.getByText("Close report")).toBeVisible();
   await expect.poll(() => report.evaluate(() => window.__reportXss === true)).toBe(false);
+
+  const downloadPromise = report.waitForEvent("download");
+  await report.getByText("Download Excel").click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^EV_Fire_Apparatus_Charging_Report_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.xlsx$/);
+  const downloadedPath = await download.path();
+  expect(downloadedPath).not.toBeNull();
+  const bytes = readFileSync(downloadedPath);
+  expect(bytes[0]).toBe(0x50);
+  expect(bytes[1]).toBe(0x4b);
 });
 
 test("oversized URL inventory is limited to 100 trucks and remains responsive", async ({ page }) => {

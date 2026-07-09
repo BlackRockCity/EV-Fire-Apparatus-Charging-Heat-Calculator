@@ -602,6 +602,78 @@ describe("UI summary, presets, and report mode", () => {
     expect(html).not.toContain("<script>window.__reportXss=true</script>");
   });
 
+  it("adds a real XLSX report download with organized sections, alignment, and safe content", () => {
+    const dom = createApp();
+    addTruck(dom.window, { name: "<img src=x onerror=\"window.__xlsXss=true\">" });
+
+    expect(dom.window.eval("APP_VERSION")).toBe("2.4.0");
+    const report = dom.window.generateReportHTML();
+    expect(report).toContain("Download Excel");
+    expect(report).toContain("downloadReportExcel()");
+
+    const files = dom.window.generateReportXlsxFiles(new Date("2026-07-09T15:04:00"));
+    expect(Object.keys(files).sort()).toEqual([
+      "[Content_Types].xml",
+      "_rels/.rels",
+      "docProps/app.xml",
+      "docProps/core.xml",
+      "xl/_rels/workbook.xml.rels",
+      "xl/styles.xml",
+      "xl/workbook.xml",
+      "xl/worksheets/sheet1.xml"
+    ]);
+    const sheet = files["xl/worksheets/sheet1.xml"];
+    expect(sheet).toContain("Scenario Report");
+    expect(sheet).toContain("Generated");
+    expect(sheet).toContain("App version");
+    expect(sheet).toContain("2.4.0");
+    expect(sheet).toContain("Scenario summary");
+    expect(sheet).toContain("Headline results");
+    expect(sheet).toContain("Input assumptions");
+    expect(sheet).toContain("Fleet Inventory");
+    expect(sheet).toContain("Truck name");
+    expect(sheet).toContain("Battery kWh");
+    expect(sheet).toContain("Max charge kW");
+    expect(sheet).toContain("Charging now");
+    expect(sheet).toContain("Breakdown");
+    expect(sheet).toContain("Calculation Method");
+    expect(sheet).toContain("Populated Equation");
+    expect(sheet).toContain("Load context");
+    expect(sheet).toContain("Caution");
+    expect(sheet).toContain("GNU GPL v3.0");
+    expect(sheet).toContain("BTU/h");
+    expect(sheet).toContain("kW");
+    expect(sheet).toContain("&lt;img src=x onerror=&quot;window.__xlsXss=true&quot;&gt;");
+    expect(sheet).not.toContain("<img src=x");
+    expect(sheet).not.toMatch(/\b(?:NaN|Infinity|undefined|null)\b/i);
+    expect(sheet).toMatch(/<c r="A\d+" s="2" t="inlineStr"><is><t>Headline results<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="3" t="inlineStr"><is><t>Total heat to bay<\/t><\/is><\/c><c r="B\d+" s="3"><v>66534<\/v><\/c><c r="C\d+" s="3" t="inlineStr"><is><t>BTU\/h<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="3" t="inlineStr"><is><t>Total heat to bay<\/t><\/is><\/c><c r="B\d+" s="3"><v>19.5<\/v><\/c><c r="C\d+" s="3" t="inlineStr"><is><t>kW<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="3" t="inlineStr"><is><t>Cooling tons<\/t><\/is><\/c><c r="B\d+" s="3"><v>5.54<\/v><\/c><c r="C\d+" s="3" t="inlineStr"><is><t>tons<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="3" t="inlineStr"><is><t>CFM at selected ΔT<\/t><\/is><\/c><c r="B\d+" s="3"><v>6161<\/v><\/c><c r="C\d+" s="3" t="inlineStr"><is><t>CFM<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="3" t="inlineStr"><is><t>Requested charge power<\/t><\/is><\/c><c r="B\d+" s="3"><v>150<\/v><\/c><c r="C\d+" s="3" t="inlineStr"><is><t>kW<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="3" t="inlineStr"><is><t>Charger efficiency<\/t><\/is><\/c><c r="B\d+" s="3"><v>95<\/v><\/c><c r="C\d+" s="3" t="inlineStr"><is><t>%<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="2" t="inlineStr"><is><t>Input assumptions<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="4" t="inlineStr"><is><t>Truck name<\/t><\/is><\/c>/);
+    expect(sheet).toMatch(/<c r="A\d+" s="5" t="inlineStr"><is><t>&lt;img src=x onerror=&quot;window.__xlsXss=true&quot;&gt;<\/t><\/is><\/c><c r="B\d+" s="5"><v>132<\/v><\/c><c r="C\d+" s="5"><v>150<\/v><\/c>/);
+
+    const filename = dom.window.reportExcelFilename(new Date("2026-07-09T15:04:00"));
+    expect(filename).toBe("EV_Fire_Apparatus_Charging_Report_2026-07-09_15-04.xlsx");
+    const bytes = dom.window.generateReportXLSX(new Date("2026-07-09T15:04:00"));
+    expect(bytes[0]).toBe(0x50);
+    expect(bytes[1]).toBe(0x4b);
+  });
+
+  it("provides localized Excel export labels for every language", () => {
+    const dom = createApp();
+    for (const [code] of expectedLanguageOptions) {
+      const dictionary = dom.window.I18N[code];
+      expect(dictionary).toHaveProperty("downloadXls");
+      expect(dictionary.downloadXls, `${code}.downloadXls`).not.toBe("");
+      expectNoPlaceholderText(dictionary.downloadXls, `${code}.downloadXls`);
+    }
+  });
+
   it("localizes static controls, attributes, presets, dynamic copy, and report labels", () => {
     const dom = createApp();
     const expectedCodes = expectedLanguageOptions.map(([code]) => code);
