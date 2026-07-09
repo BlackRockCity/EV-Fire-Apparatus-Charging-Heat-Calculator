@@ -1,6 +1,6 @@
 # EV Fire Apparatus Charging Heat Calculator
 
-**Current version: 2.3.1
+**Current version: 2.4.0**
 
 <img src="./docs/assets/FiretrucksSVG-iOS-Default-1024x1024@1x.png" alt="EV Charger and Fire Trucks icon" width="90" align="right">
 
@@ -56,6 +56,7 @@ The calculator runs from the static [`index.html`](index.html) file and supports
 - Share URLs include `units=ip|si` so shared scenarios reopen with the intended unit system.
 - HTML report mode for creating a clean engineering-style summary.
 - Browser `Print / Save as PDF` support for reports.
+- Excel `.xlsx` `Download Excel` support for report data.
 
 ### Reliability and Safety
 
@@ -193,7 +194,7 @@ Reports include:
 - Load context
 - Caution text and links
 
-`Print / Save as PDF` uses the browser print dialog. `Close report` closes the report window.
+`Print / Save as PDF` uses the browser print dialog. `Download Excel` saves an Excel `.xlsx` report spreadsheet. `Close report` closes the report window.
 
 ## Example Use
 
@@ -378,6 +379,7 @@ Do not commit:
 
 ## Version History
 
+- `2.4.0`: Added Excel/XLSX report export from generated scenario reports, with calculation-friendly numeric cells and separated units for downstream spreadsheet use.
 - `2.3.1`: Persian/Farsi and Swedish localization refinements plus integrated non-sticky header treatment.
 - `2.3.0`: Dutch, Polish, Swedish, Danish, Norwegian Bokmål, Finnish, Czech, Greek, Hebrew, and Hungarian localization, including Hebrew RTL support and population-center emoji markers in the language selector.
 - `2.2.0`: Bengali, Indonesian, Urdu, Russian, Italian, Vietnamese, Turkish, Thai, Persian/Farsi, Swahili, and Traditional Chinese localization, including localized reports and RTL support for Urdu and Persian.
