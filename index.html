@@ -750,7 +750,7 @@
 
 <script>
 /* ---------- Data (Updated with verified 2025 specs) ---------- */
-const APP_VERSION = "2.3.1";
+const APP_VERSION = "2.4.0";
 const MODELS = [
   {
     id: "RTX",
@@ -901,6 +901,7 @@ const I18N_EN = {
   warningPdfLimited: "PDF export is limited to {max} trucks.",
   reportSubtitle: "Scenario Report",
   printReport: "Print / Save as PDF",
+  downloadXls: "Download Excel",
   closeReport: "Close report",
   reportGenerated: "Generated {date}",
   reportScenarioSummary: "Scenario summary",
@@ -5342,6 +5343,42 @@ const BUY_ME_COFFEE_I18N = {
 Object.entries(BUY_ME_COFFEE_I18N).forEach(([code, label]) => {
   I18N[code].buyMeCoffee = label;
 });
+const DOWNLOAD_XLS_I18N = {
+  en: "Download Excel",
+  "zh-Hans": "下载 Excel",
+  "zh-Hant": "下載 Excel",
+  es: "Descargar Excel",
+  fr: "Télécharger Excel",
+  de: "Excel herunterladen",
+  ja: "Excelをダウンロード",
+  ko: "Excel 다운로드",
+  pt: "Baixar Excel",
+  ar: "تنزيل Excel",
+  hi: "Excel डाउनलोड करें",
+  bn: "Excel ডাউনলোড করুন",
+  id: "Unduh Excel",
+  ur: "Excel ڈاؤن لوڈ کریں",
+  ru: "Скачать Excel",
+  it: "Scarica Excel",
+  vi: "Tải xuống Excel",
+  tr: "Excel indir",
+  th: "ดาวน์โหลด Excel",
+  fa: "دانلود Excel",
+  sw: "Pakua Excel",
+  nl: "Excel downloaden",
+  pl: "Pobierz Excel",
+  sv: "Ladda ner Excel",
+  da: "Download Excel",
+  nb: "Last ned Excel",
+  fi: "Lataa Excel",
+  cs: "Stáhnout Excel",
+  el: "Λήψη Excel",
+  he: "הורד Excel",
+  hu: "Excel letöltése"
+};
+Object.entries(DOWNLOAD_XLS_I18N).forEach(([code, label]) => {
+  I18N[code].downloadXls = label;
+});
 const AUDITED_FA_SV_I18N = {
   "fa": {
     "appTitle": "ماشین حساب حرارتی شارژ دستگاه آتش نشانی EV",
@@ -6063,6 +6100,9 @@ const FA_SV_TERMINOLOGY_REFINEMENTS = {
   }
 };
 Object.entries(FA_SV_TERMINOLOGY_REFINEMENTS).forEach(([code, entries]) => Object.assign(I18N[code], entries));
+Object.entries(DOWNLOAD_XLS_I18N).forEach(([code, label]) => {
+  I18N[code].downloadXls = label;
+});
 ["es","pt","fr","de","zh-Hans"].forEach(code => {
   Object.keys(I18N.en).forEach(key => {
     if(key === "unitPill") return;
@@ -7513,6 +7553,400 @@ function reportRows(items){
   return items.map(([label, value]) => `<tr><th>${escapeHTML(label)}</th><td>${escapeHTML(value)}</td></tr>`).join("");
 }
 
+function reportExcelFilename(date = new Date()){
+  const pad = value => String(value).padStart(2, "0");
+  return `EV_Fire_Apparatus_Charging_Report_${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}.xlsx`;
+}
+
+function buildReportExportData(generatedAt = new Date()){
+  const I = readInputs({normalizeDisplay:true});
+  const R = compute({normalizeDisplay:true});
+  const summary = $("scenarioSummary")?.textContent || "";
+  const loadContext = $("loadContextNote")?.textContent || "";
+  const equation = $("populatedEquation")?.textContent || "";
+  const generated = generatedAt.toLocaleString();
+  const roundNumber = (value, decimals = 2) => Number(Number(value).toFixed(decimals));
+  const areaValue = currentUnits === UNIT_SYSTEMS.SI ? roundNumber(R.bayM2, 1) : roundNumber(I.baySf, 0);
+  const areaUnit = currentUnits === UNIT_SYSTEMS.SI ? "m²" : "ft²";
+  const deltaValue = currentUnits === UNIT_SYSTEMS.SI ? roundNumber(I.deltaT / 1.8, 1) : roundNumber(I.deltaT, 0);
+  const deltaUnit = currentUnits === UNIT_SYSTEMS.SI ? "°C" : "°F";
+  const assumptions = [
+    {label: currentUnits === UNIT_SYSTEMS.SI ? t("assumptionBayArea") : t("assumptionBaySf"), value: areaValue, unit: areaUnit},
+    {label: t("vehiclesTotalLabel"), value: I.vehicles, unit: ""},
+    {label: t("simultaneousLabel"), value: I.concurrent, unit: ""},
+    {label: t("assumptionChargingType"), value: I.chargeType, unit: ""},
+    {label: t("assumptionRequestedPower"), value: roundNumber(I.P, 1), unit: "kW"},
+    {label: t("assumptionDiversity"), value: roundNumber(I.diversity, 2), unit: ""},
+    {label: t("assumptionCabinetLocation"), value: I.cabinetIn ? t("assumptionCabinetIn") : t("assumptionCabinetOut"), unit: ""},
+    {label: t("assumptionChargerEfficiency"), value: roundNumber(I.etaCharger * 100, 1), unit: "%"},
+    {label: t("assumptionVehicleEfficiency"), value: roundNumber(I.etaVeh * 100, 1), unit: "%"},
+    {label: t("assumptionBtms"), value: roundNumber(I.btmsFrac * 100, 0), unit: "%"},
+    {label: currentUnits === UNIT_SYSTEMS.SI ? t("assumptionDeltaTSi") : t("assumptionDeltaT"), value: deltaValue, unit: deltaUnit},
+    {label: t("assumptionSafety"), value: roundNumber(I.safety * 100, 0), unit: "%"}
+  ];
+  const results = currentUnits === UNIT_SYSTEMS.SI ? [
+    {label: t("totalHeatKicker"), value: roundNumber(R.totalKW, 2), unit: "kW"},
+    {label: t("totalHeatKicker"), value: roundNumber(R.totalBTUh, 0), unit: "BTU/h"},
+    {label: t("coolingTonsReferenceLabel"), value: roundNumber(R.tons, 2), unit: t("refrigerationTonsLabel")},
+    {label: t("airflowM3hLabel"), value: roundNumber(R.m3h, 0), unit: "m³/h"},
+    {label: t("airflowLsLabel"), value: roundNumber(R.ls, 1), unit: "L/s"},
+    {label: t("wattsPerSquareMeterLabel"), value: roundNumber(R.wPerM2, 2), unit: "W/m²"},
+    {label: t("resultPerVehicle"), value: roundNumber(R.cabKW_perVeh + R.vehKW_perVeh, 2), unit: "kW"}
+  ] : [
+    {label: t("totalHeatKicker"), value: roundNumber(R.totalBTUh, 0), unit: "BTU/h"},
+    {label: t("totalHeatKicker"), value: roundNumber(R.totalKW, 2), unit: "kW"},
+    {label: t("resultCoolingTons"), value: roundNumber(R.tons, 2), unit: "tons"},
+    {label: t("resultCfm"), value: roundNumber(R.cfm, 0), unit: "CFM"},
+    {label: t("wattsPerSquareFootLabel"), value: roundNumber(R.wPerSf, 2), unit: "W/ft²"},
+    {label: t("resultPerVehicle"), value: roundNumber(R.cabKW_perVeh + R.vehKW_perVeh, 2), unit: "kW"}
+  ];
+  const breakdown = [
+    {label: t("resultCabinetHeat"), value: roundNumber(R.cabKW_perVeh * R.coincident * R.diversity * (1+R.safety), 2), unit: "kW"},
+    {label: t("resultVehicleHeat"), value: roundNumber(R.vehKW_perVeh * R.coincident * R.diversity * (1+R.safety), 2), unit: "kW"}
+  ];
+  const fleet = truckInventory.length ? truckInventory.map(truck => [
+    truck.name,
+    roundNumber(truck.packKWh, 0),
+    roundNumber(truck.vehMaxKW, 0),
+    truck.charging ? t("reportYes") : t("reportNo")
+  ]) : [[t("reportNoTrucks"), "", "", ""]];
+
+  return {generated, summary, loadContext, equation, assumptions, results, breakdown, fleet};
+}
+
+function xmlEscape(value){
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function columnName(index){
+  let name = "";
+  let value = index + 1;
+  while(value > 0){
+    const remainder = (value - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    value = Math.floor((value - 1) / 26);
+  }
+  return name;
+}
+
+function xlsxCell(rowNumber, columnIndex, value, styleId){
+  const ref = `${columnName(columnIndex)}${rowNumber}`;
+  const style = styleId ? ` s="${styleId}"` : "";
+  if(typeof value === "number" && Number.isFinite(value)){
+    return `<c r="${ref}"${style}><v>${value}</v></c>`;
+  }
+  return `<c r="${ref}"${style} t="inlineStr"><is><t>${xmlEscape(value)}</t></is></c>`;
+}
+
+function generateReportWorksheetXML(generatedAt = new Date()){
+  const data = buildReportExportData(generatedAt);
+  const rows = [];
+  const merges = [];
+
+  function addMerged(value, styleId){
+    const rowNumber = rows.length + 1;
+    rows.push({cells:[[0, value, styleId]]});
+    merges.push(`A${rowNumber}:D${rowNumber}`);
+  }
+  function addPair(label, value, unit = ""){
+    rows.push({cells:[[0, label, 3], [1, value, 3], [2, unit, 3]]});
+  }
+  function addQuantity(row){
+    addPair(row.label, row.value, row.unit);
+  }
+  function addText(value){
+    const rowNumber = rows.length + 1;
+    rows.push({cells:[[0, value, 3]]});
+    merges.push(`A${rowNumber}:D${rowNumber}`);
+  }
+  function addSection(title){
+    addMerged(title, 2);
+  }
+  function addSpacer(){
+    rows.push({cells:[]});
+  }
+
+  addMerged(t("appTitle"), 1);
+  addPair("Report title", t("reportSubtitle"));
+  addPair("Generated date/time", data.generated);
+  addPair("App version", APP_VERSION);
+  addSpacer();
+  addSection(t("reportScenarioSummary"));
+  addText(data.summary);
+  addSpacer();
+  addSection(t("reportHeadlineResults"));
+  data.results.forEach(addQuantity);
+  addSpacer();
+  addSection(t("reportInputAssumptions"));
+  data.assumptions.forEach(addQuantity);
+  addSpacer();
+  addSection(t("fleetTitle"));
+  rows.push({cells:[
+    [0, t("reportTruckName"), 4],
+    [1, t("reportBatteryKwh"), 4],
+    [2, t("reportMaxChargeKw"), 4],
+    [3, t("reportChargingNow"), 4]
+  ]});
+  data.fleet.forEach(row => {
+    rows.push({cells:row.map((value, index) => [index, value, 5])});
+  });
+  addSpacer();
+  addSection(t("reportBreakdown"));
+  data.breakdown.forEach(addQuantity);
+  addSpacer();
+  addSection(t("calculationMethodTitle"));
+  addText(t("reportCalculationMethodText"));
+  addSpacer();
+  addSection(t("populatedEquationTitle"));
+  addText(data.equation);
+  addSpacer();
+  addSection(t("reportLoadContext"));
+  addText(data.loadContext);
+  addSpacer();
+  addSection(t("cautionTitle"));
+  addText(t("cautionText"));
+  addSpacer();
+  addSection(`${t("documentationReadme")} / ${t("licenseText")}`);
+  addPair(t("documentationReadme"), "https://github.com/BlackRockCity/EV-Fire-Apparatus-Charging-Heat-Calculator/blob/main/README.md");
+  addPair("GNU GPL v3.0", "https://www.gnu.org/licenses/gpl-3.0.en.html");
+
+  const sheetRows = rows.map((row, index) => {
+    const rowNumber = index + 1;
+    return `<row r="${rowNumber}">${row.cells.map(([col, value, style]) => xlsxCell(rowNumber, col, value, style)).join("")}</row>`;
+  }).join("");
+  const mergeXML = merges.length ? `<mergeCells count="${merges.length}">${merges.map(ref => `<mergeCell ref="${ref}"/>`).join("")}</mergeCells>` : "";
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetViews><sheetView workbookViewId="0"/></sheetViews>
+  <sheetFormatPr defaultRowHeight="18"/>
+  <cols><col min="1" max="1" width="34" customWidth="1"/><col min="2" max="2" width="34" customWidth="1"/><col min="3" max="3" width="22" customWidth="1"/><col min="4" max="4" width="22" customWidth="1"/></cols>
+  <sheetData>${sheetRows}</sheetData>
+  ${mergeXML}
+</worksheet>`;
+}
+
+function generateReportXlsxFiles(generatedAt = new Date()){
+  const created = generatedAt.toISOString();
+  return {
+    "[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`,
+    "_rels/.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`,
+    "docProps/app.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <Application>${xmlEscape(t("appTitle"))}</Application>
+</Properties>`,
+    "docProps/core.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:title>${xmlEscape(t("reportSubtitle"))}</dc:title>
+  <dc:creator>${xmlEscape(t("appTitle"))}</dc:creator>
+  <dcterms:created xsi:type="dcterms:W3CDTF">${xmlEscape(created)}</dcterms:created>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">${xmlEscape(created)}</dcterms:modified>
+</cp:coreProperties>`,
+    "xl/workbook.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Scenario Report" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`,
+    "xl/_rels/workbook.xml.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`,
+    "xl/styles.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="3"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="16"/><color rgb="FFFFFFFF"/><name val="Arial"/></font><font><b/><sz val="12"/><name val="Arial"/></font></fonts>
+  <fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F5F8B"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDBEAFE"/><bgColor indexed="64"/></patternFill></fill></fills>
+  <borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF9FB3C8"/></left><right style="thin"><color rgb="FF9FB3C8"/></right><top style="thin"><color rgb="FF9FB3C8"/></top><bottom style="thin"><color rgb="FF9FB3C8"/></bottom><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="6">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+  </cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`,
+    "xl/worksheets/sheet1.xml": generateReportWorksheetXML(generatedAt)
+  };
+}
+
+function crc32(bytes){
+  if(!crc32.table){
+    crc32.table = Array.from({length:256}, (_, n) => {
+      let c = n;
+      for(let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      return c >>> 0;
+    });
+  }
+  let crc = 0xffffffff;
+  for(const byte of bytes) crc = crc32.table[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function textBytes(text){
+  if(typeof TextEncoder !== "undefined"){
+    return new TextEncoder().encode(text);
+  }
+  const bytes = [];
+  for(const char of String(text)){
+    let codePoint = char.codePointAt(0);
+    if(codePoint <= 0x7f){
+      bytes.push(codePoint);
+    }else if(codePoint <= 0x7ff){
+      bytes.push(0xc0 | (codePoint >> 6), 0x80 | (codePoint & 0x3f));
+    }else if(codePoint <= 0xffff){
+      bytes.push(0xe0 | (codePoint >> 12), 0x80 | ((codePoint >> 6) & 0x3f), 0x80 | (codePoint & 0x3f));
+    }else{
+      bytes.push(0xf0 | (codePoint >> 18), 0x80 | ((codePoint >> 12) & 0x3f), 0x80 | ((codePoint >> 6) & 0x3f), 0x80 | (codePoint & 0x3f));
+    }
+  }
+  return new Uint8Array(bytes);
+}
+
+function writeUint16(bytes, value){
+  bytes.push(value & 0xff, (value >>> 8) & 0xff);
+}
+
+function writeUint32(bytes, value){
+  bytes.push(value & 0xff, (value >>> 8) & 0xff, (value >>> 16) & 0xff, (value >>> 24) & 0xff);
+}
+
+function dosDateTime(date = new Date()){
+  const year = Math.max(1980, date.getFullYear());
+  return {
+    time: (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2),
+    date: ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate()
+  };
+}
+
+function createZip(files, date = new Date()){
+  const local = [];
+  const central = [];
+  let offset = 0;
+  const stamps = dosDateTime(date);
+
+  Object.entries(files).forEach(([name, content]) => {
+    const nameBytes = textBytes(name);
+    const contentBytes = content instanceof Uint8Array ? content : textBytes(content);
+    const crc = crc32(contentBytes);
+    const localHeader = [];
+    writeUint32(localHeader, 0x04034b50);
+    writeUint16(localHeader, 20);
+    writeUint16(localHeader, 0x0800);
+    writeUint16(localHeader, 0);
+    writeUint16(localHeader, stamps.time);
+    writeUint16(localHeader, stamps.date);
+    writeUint32(localHeader, crc);
+    writeUint32(localHeader, contentBytes.length);
+    writeUint32(localHeader, contentBytes.length);
+    writeUint16(localHeader, nameBytes.length);
+    writeUint16(localHeader, 0);
+    local.push(new Uint8Array(localHeader), nameBytes, contentBytes);
+
+    const centralHeader = [];
+    writeUint32(centralHeader, 0x02014b50);
+    writeUint16(centralHeader, 20);
+    writeUint16(centralHeader, 20);
+    writeUint16(centralHeader, 0x0800);
+    writeUint16(centralHeader, 0);
+    writeUint16(centralHeader, stamps.time);
+    writeUint16(centralHeader, stamps.date);
+    writeUint32(centralHeader, crc);
+    writeUint32(centralHeader, contentBytes.length);
+    writeUint32(centralHeader, contentBytes.length);
+    writeUint16(centralHeader, nameBytes.length);
+    writeUint16(centralHeader, 0);
+    writeUint16(centralHeader, 0);
+    writeUint16(centralHeader, 0);
+    writeUint16(centralHeader, 0);
+    writeUint32(centralHeader, 0);
+    writeUint32(centralHeader, offset);
+    central.push(new Uint8Array(centralHeader), nameBytes);
+
+    offset += localHeader.length + nameBytes.length + contentBytes.length;
+  });
+
+  const centralSize = central.reduce((sum, part) => sum + part.length, 0);
+  const end = [];
+  writeUint32(end, 0x06054b50);
+  writeUint16(end, 0);
+  writeUint16(end, 0);
+  writeUint16(end, Object.keys(files).length);
+  writeUint16(end, Object.keys(files).length);
+  writeUint32(end, centralSize);
+  writeUint32(end, offset);
+  writeUint16(end, 0);
+
+  const parts = [...local, ...central, new Uint8Array(end)];
+  const total = parts.reduce((sum, part) => sum + part.length, 0);
+  const zip = new Uint8Array(total);
+  let cursor = 0;
+  parts.forEach(part => {
+    zip.set(part, cursor);
+    cursor += part.length;
+  });
+  return zip;
+}
+
+function generateReportXLSX(generatedAt = new Date()){
+  return createZip(generateReportXlsxFiles(generatedAt), generatedAt);
+}
+
+function bytesToBase64(bytes){
+  let binary = "";
+  const chunkSize = 0x8000;
+  for(let i = 0; i < bytes.length; i += chunkSize){
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function triggerExcelDownload(workbookBytes, filename, targetDocument = document){
+  const blob = new Blob([workbookBytes], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const url = URL.createObjectURL(blob);
+  const link = targetDocument.createElement("a");
+  link.href = url;
+  link.download = filename;
+  targetDocument.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    link.remove();
+  }, 0);
+}
+
+function downloadReportExcel(){
+  triggerExcelDownload(generateReportXLSX(), reportExcelFilename());
+}
+
+function safeScriptJSON(value){
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 function generateReportHTML(){
   const I = readInputs({normalizeDisplay:true});
   const R = compute({normalizeDisplay:true});
@@ -7522,6 +7956,8 @@ function generateReportHTML(){
   const generated = new Date().toLocaleString();
   const lang = currentLanguage;
   const dir = isRtlLanguage(lang) ? "rtl" : "ltr";
+  const excelBase64 = bytesToBase64(generateReportXLSX());
+  const excelFilename = reportExcelFilename();
   const headline = headlineValues(R);
   const areaValue = currentUnits === UNIT_SYSTEMS.SI ? `${fmt(R.bayM2,1)} m²` : `${fmt(I.baySf,0)} ft²`;
   const deltaValue = currentUnits === UNIT_SYSTEMS.SI ? `${fmt(I.deltaT / 1.8,1)} °C` : `${fmt(I.deltaT,0)} °F`;
@@ -7573,6 +8009,29 @@ function generateReportHTML(){
   .formula-ltr{direction:ltr; text-align:left; unicode-bidi:isolate}
   @media print{body{background:white} main{padding:0}.actions{display:none} table,.summary,.note{box-shadow:none} a{color:#000}}
 </style>
+<script>
+const REPORT_EXCEL_BASE64 = ${safeScriptJSON(excelBase64)};
+const REPORT_EXCEL_FILENAME = ${safeScriptJSON(excelFilename)};
+function reportBase64ToBytes(base64){
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function downloadReportExcel(){
+  const blob = new Blob([reportBase64ToBytes(REPORT_EXCEL_BASE64)], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = REPORT_EXCEL_FILENAME;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(function(){
+    URL.revokeObjectURL(url);
+    link.remove();
+  }, 0);
+}
+<\/script>
 </head>
 <body>
 <main>
@@ -7580,7 +8039,7 @@ function generateReportHTML(){
     <h1>${escapeHTML(t("appTitle"))}</h1>
     <div class="subtitle">${escapeHTML(t("reportSubtitle"))} - ${escapeHTML(t("reportGenerated", {date: generated}))}</div>
   </header>
-  <div class="actions"><button onclick="window.print()">${escapeHTML(t("printReport"))}</button><button class="secondary" onclick="window.close()">${escapeHTML(t("closeReport"))}</button></div>
+  <div class="actions"><button onclick="window.print()">${escapeHTML(t("printReport"))}</button><button onclick="downloadReportExcel()">${escapeHTML(t("downloadXls"))}</button><button class="secondary" onclick="window.close()">${escapeHTML(t("closeReport"))}</button></div>
   <section><h2>${escapeHTML(t("reportScenarioSummary"))}</h2><div class="summary">${escapeHTML(summary)}</div></section>
   <section><h2>${escapeHTML(t("reportHeadlineResults"))}</h2><table>${results}</table></section>
   <section><h2>${escapeHTML(t("reportInputAssumptions"))}</h2><table>${assumptions}</table></section>
