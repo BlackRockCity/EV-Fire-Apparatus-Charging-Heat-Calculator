@@ -171,6 +171,8 @@ function expectNoUntranslatedFragments(text, context) {
 const placeholderTextPattern = /localized text|localised text|Texto localizado|Texte localisé|(^|\s)(TODO|TRANSLATE|TBD|placeholder|untranslated)(\s|$|:)|ローカライズ|翻訳テキスト|プレースホルダー|(^|\s)説明(\s|$|:)|현지화|현지화된 텍스트|번역 텍스트|자리 표시자|(^|\s)설명(\s|$|:)|نص مترجم|نص محلي|عنصر نائب|(^|\s)ترجمة(\s|$|:)|^شرح$|स्थानीयकृत पाठ|अनुवादित पाठ|प्लेसहोल्डर|(^|\s)विवरण(\s|$|:)/i;
 const additionalPlaceholderTextPattern = /স্থানীয়কৃত পাঠ|অনুবাদ|প্লেসহোল্ডার|(^|\s)বিবরণ(\s|$|:)|teks lokal|teks terjemahan|(^|\s)(placeholder|deskripsi)(\s|$|:)|مقامی متن|ترجمہ شدہ متن|پلیس ہولڈر|(^|\s)تفصیل(\s|$|:)|локализованный текст|(^|\s)(перевод|заполнитель|описание)(\s|$|:)|testo localizzato|testo tradotto|segnaposto|(^|\s)descrizione(\s|$|:)|văn bản được bản địa hóa|văn bản dịch|trình giữ chỗ|(^|\s)mô tả(\s|$|:)|yerelleştirilmiş metin|çeviri metni|yer tutucu|(^|\s)açıklama(\s|$|:)|ข้อความที่แปลแล้ว|ข้อความท้องถิ่น|ตัวยึดตำแหน่ง|(^|\s)คำอธิบาย(\s|$|:)|متن محلی|متن ترجمه‌شده|جای‌نگهدار|(^|\s)توضیح(\s|$|:)|maandishi yaliyotafsiriwa|maandishi ya ndani|kishika nafasi|(^|\s)maelezo(\s|$|:)|本地化文字|翻譯文字|佔位符|(^|\s)說明(\s|$|:)/i;
 const europeanPlaceholderTextPattern = /gelokaliseerde tekst|vertaalde tekst|tijdelijke aanduiding|(^|\s)beschrijving(\s|$|:)|tekst zlokalizowany|przet[łl]umaczony tekst|symbol zast[eę]pczy|(^|\s)opis(\s|$|:)|lokaliserad text|[öo]versatt text|platsh[åa]llare|(^|\s)beskrivning(\s|$|:)|lokaliseret tekst|oversat tekst|pladsholder|lokalisert tekst|oversatt tekst|plassholder|lokalisoitu teksti|k[äa][äa]nnetty teksti|paikkamerkki|(^|\s)kuvaus(\s|$|:)|lokalizovan[ýy] text|p[řr]elo[žz]en[ýy] text|z[áa]stupn[ýy] symbol|(^|\s)popis(\s|$|:)|τοπικοποιημένο κείμενο|μεταφρασμένο κείμενο|σύμβολο κράτησης|(^|\s)περιγραφή(\s|$|:)|טקסט מקומי|טקסט מתורגם|מציין מיקום|(^|\s)תיאור(\s|$|:)|lokaliz[áa]lt sz[öo]veg|leford[íi]tott sz[öo]veg|hely[őo]rz[őo]|(^|\s)le[íi]r[áa]s(\s|$|:)/i;
+const persianArabicIntrusionPattern = /إن|إلى|على|هذا|هذه|تم إنشاء|الحرارة|الحظيرة|خزانات|الغرفة|التزامن|التنوع|المعادلة|الوحدات|الفراغ|ينطبق|عرض التوثيق|مجاني الاستخدام|إزالة|تبديل الشحن|مركبة|شاحنة|کامیون|اتوبوس|خلیج/i;
+const swedishAwkwardTextPattern = /\b(?:vik(?:en)?|fack(?:et)?|sammanbrott|befolkad|laddningstruck|truckar|lastbilar|lastbilens|apparatfacket|Bay-området)\b|Värm till rymden|In bay|bay area/i;
 const additionalLanguageCodes = ["bn", "id", "ur", "ru", "it", "vi", "tr", "th", "fa", "sw", "zh-Hant"];
 const newLanguageCodes = ["nl", "pl", "sv", "da", "nb", "fi", "cs", "el", "he", "hu"];
 const expectedLanguageOptions = [
@@ -841,6 +843,36 @@ describe("UI summary, presets, and report mode", () => {
         expect(report).toContain('class="formula-ltr" dir="ltr"');
       }
     }
+  });
+
+  it("keeps Persian consistently Persian and Swedish idiomatic across UI and reports", () => {
+    const dom = createApp();
+    addTruck(dom.window);
+    const { I18N, document } = dom.window;
+
+    for (const [key, value] of Object.entries(I18N.fa)) {
+      expect(value, `fa.${key}`).not.toMatch(persianArabicIntrusionPattern);
+    }
+    dom.window.applyLanguage("fa");
+    expect(document.documentElement.dir).toBe("rtl");
+    expect(visibleGuiText(document)).not.toMatch(persianArabicIntrusionPattern);
+    expect(dom.window.generateReportHTML()).not.toMatch(persianArabicIntrusionPattern);
+    expect(document.querySelector(".right-column .card.out h2").textContent).toBe("نتایج");
+    expect(document.querySelector(".right-column .card.out h3").textContent).toBe("تفکیک");
+    expect(document.getElementById("cabNote").textContent).toContain("کابینت شارژر");
+    expect(document.getElementById("cabNote").textContent).toContain("سالن");
+
+    for (const [key, value] of Object.entries(I18N.sv)) {
+      expect(value, `sv.${key}`).not.toMatch(swedishAwkwardTextPattern);
+    }
+    dom.window.applyLanguage("sv");
+    expect(document.documentElement.dir).toBe("ltr");
+    expect(visibleGuiText(document)).not.toMatch(swedishAwkwardTextPattern);
+    expect(dom.window.generateReportHTML()).not.toMatch(swedishAwkwardTextPattern);
+    expect(document.querySelector(".right-column .card.out h3").textContent).toBe("Uppdelning");
+    expect(document.querySelector(".formula-title:nth-of-type(1)")?.textContent ?? I18N.sv.calculationMethodTitle).toContain("Beräkningsmetod");
+    expect(document.getElementById("cabNote").textContent).toContain("laddarskåp");
+    expect(document.getElementById("cabNote").textContent).toContain("vagnhall");
   });
 });
 

@@ -1,6 +1,6 @@
 # EV Fire Apparatus Charging Heat Calculator
 
-**Current version: 2.3.0
+**Current version: 2.3.1
 
 <img src="./docs/assets/FiretrucksSVG-iOS-Default-1024x1024@1x.png" alt="EV Charger and Fire Trucks icon" width="90" align="right">
 
@@ -378,6 +378,7 @@ Do not commit:
 
 ## Version History
 
+- `2.3.1`: Persian/Farsi and Swedish localization refinements plus integrated non-sticky header treatment.
 - `2.3.0`: Dutch, Polish, Swedish, Danish, Norwegian Bokmål, Finnish, Czech, Greek, Hebrew, and Hungarian localization, including Hebrew RTL support and population-center emoji markers in the language selector.
 - `2.2.0`: Bengali, Indonesian, Urdu, Russian, Italian, Vietnamese, Turkish, Thai, Persian/Farsi, Swahili, and Traditional Chinese localization, including localized reports and RTL support for Urdu and Persian.
 - `2.1.0`: I-P/SI unit selector, localized unit displays, localized reports with units, share URL unit state, saved scenario unit metadata.

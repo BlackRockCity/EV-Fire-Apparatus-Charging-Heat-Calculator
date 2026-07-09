@@ -44,6 +44,14 @@ async function expectNoPlaceholderText(page) {
   await expect(page.locator("body")).not.toContainText(/Localized text|localized text|localised text|Texto localizado|Texte localisé|(^|\s)(placeholder|TODO|TRANSLATE|untranslated)(\s|$|:)|gelokaliseerde tekst|vertaalde tekst|tijdelijke aanduiding|tekst zlokalizowany|przet[łl]umaczony tekst|symbol zast[eę]pczy|lokaliserad text|[öo]versatt text|platsh[åa]llare|lokaliseret tekst|oversat tekst|pladsholder|lokalisert tekst|oversatt tekst|plassholder|lokalisoitu teksti|k[äa][äa]nnetty teksti|paikkamerkki|lokalizovan[ýy] text|p[řr]elo[žz]en[ýy] text|z[áa]stupn[ýy] symbol|τοπικοποιημένο κείμενο|μεταφρασμένο κείμενο|σύμβολο κράτησης|טקסט מקומי|טקסט מתורגם|מציין מיקום|lokaliz[áa]lt sz[öo]veg|leford[íi]tott sz[öo]veg|hely[őo]rz[őo]|ローカライズ|翻訳テキスト|プレースホルダー|현지화|번역 텍스트|자리 표시자|نص مترجم|نص محلي|عنصر نائب|स्थानीयकृत पाठ|अनुवादित पाठ|प्लेसहोल्डर|স্থানীয়কৃত পাঠ|প্লেসহোল্ডার|teks lokal|teks terjemahan|مقامی متن|پلیس ہولڈر|локализованный текст|заполнитель|testo localizzato|segnaposto|văn bản được bản địa hóa|trình giữ chỗ|yerelleştirilmiş metin|yer tutucu|ข้อความที่แปลแล้ว|ตัวยึดตำแหน่ง|متن محلی|جای‌نگهدار|maandishi yaliyotafsiriwa|kishika nafasi|本地化文字|佔位符/i);
 }
 
+async function expectNoPersianArabicBleed(page) {
+  await expect(page.locator("body")).not.toContainText(/إن|إلى|على|هذا|هذه|تم إنشاء|الحرارة|الحظيرة|خزانات|الغرفة|التزامن|التنوع|المعادلة|الوحدات|الفراغ|ينطبق|عرض التوثيق|مجاني الاستخدام|إزالة|تبديل الشحن|مركبة|شاحنة|کامیون|اتوبوس|خلیج/i);
+}
+
+async function expectNoAwkwardSwedishText(page) {
+  await expect(page.locator("body")).not.toContainText(/\b(?:vik(?:en)?|fack(?:et)?|sammanbrott|befolkad|laddningstruck|truckar|lastbilar|lastbilens|apparatfacket|Bay-området)\b|Värm till rymden|In bay|bay area/i);
+}
+
 const additionalLanguages = [
   ["bn", "বাংলা"],
   ["id", "Bahasa Indonesia"],
@@ -354,6 +362,9 @@ test("Dutch, Polish, Hebrew, and Greek reports are localized", async ({ page, co
 test("long localized header keeps controls grouped across responsive widths", async ({ page }) => {
   await page.locator("#languageSelect").selectOption("fr");
 
+  await expect(page.locator("header")).toHaveCSS("position", "static");
+  await expect(page.locator("header")).toHaveCSS("backdrop-filter", "none");
+
   await page.setViewportSize({ width: 1280, height: 900 });
   const wideTitle = await box(page, ".header-title-block");
   const wideControls = await box(page, ".header-controls");
@@ -551,6 +562,39 @@ test("reported incomplete languages have no placeholder text and use kW headline
   await page.locator("#languageSelect").selectOption("ar");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.locator("#populatedEquation")).toHaveCSS("direction", "ltr");
+});
+
+test("Persian stays Persian and Swedish reads with idiomatic UI terms", async ({ page, context }) => {
+  await addDefaultTruck(page);
+
+  await page.locator("#languageSelect").selectOption("fa");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator(".right-column .card.out h2")).toHaveText("نتایج");
+  await expect(page.locator(".right-column .card.out h3")).toHaveText("تفکیک");
+  await expect(page.locator("#cabNote")).toContainText("کابینت شارژر");
+  await expect(page.locator("#cabNote")).toContainText("سالن");
+  await expectNoPersianArabicBleed(page);
+  const persianPopup = context.waitForEvent("page");
+  await page.locator("#openReport").click();
+  const persianReport = await persianPopup;
+  await persianReport.waitForLoadState("domcontentloaded");
+  await expect(persianReport.locator("html")).toHaveAttribute("dir", "rtl");
+  await expectNoPersianArabicBleed(persianReport);
+  await persianReport.close();
+
+  await page.locator("#languageSelect").selectOption("sv");
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  await expect(page.locator(".right-column .card.out h3")).toHaveText("Uppdelning");
+  await expect(page.locator("#cabNote")).toContainText("laddarskåp");
+  await expect(page.locator("#cabNote")).toContainText("vagnhall");
+  await expectNoAwkwardSwedishText(page);
+  const swedishPopup = context.waitForEvent("page");
+  await page.locator("#openReport").click();
+  const swedishReport = await swedishPopup;
+  await swedishReport.waitForLoadState("domcontentloaded");
+  await expect(swedishReport.getByText("Scenariorapport")).toBeVisible();
+  await expectNoAwkwardSwedishText(swedishReport);
+  await swedishReport.close();
 });
 
 test("Japanese, Korean, Arabic, and Hindi reports use meaningful localized labels", async ({ page, context }) => {
